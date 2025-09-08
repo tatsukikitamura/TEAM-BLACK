@@ -1,0 +1,10 @@
+{
+  "title": "新サービス開始",
+  "lead": "当社は新サービスを開始します",
+  "body": [
+    { "heading": "概要", "content": "新しいサービスです" },
+    { "heading": "詳細", "content": "詳しい内容は後日発表します" }
+  ],
+  "contact": "",
+  "options": { "hooksThreshold": 3 }
+}

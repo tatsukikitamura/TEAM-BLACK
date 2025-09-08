@@ -1,0 +1,7 @@
+{
+  "title":"テストタイトル",
+  "lead":"肉が食べれるお店をご紹介します。",
+  "body":[{"heading":"詳細","content":"本気だしてやれば出来る。見れる・来れる なども含む。"}],
+  "contact":"press@example.com",
+  "options": { "maxWaitMs": 6000, "pollIntervalMs": 500 }
+}

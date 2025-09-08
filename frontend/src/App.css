@@ -1,0 +1,9 @@
+/* v4流：CSSインポートで有効化 */
+@import "tailwindcss";
+
+/* Typography プラグインもCSSで宣言できる（入れているなら） */
+@plugin "@tailwindcss/typography";
+
+/* 必要ならここにカスタムも書ける */
+
+

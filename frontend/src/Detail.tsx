@@ -1,14 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import ReactMarkdown from "react-markdown";
 
-// 各セクションを分けて変数に格納
-
 //モックデータ
-const title = `# PRTIEM、新たな時代を切り拓く革新的ソリューションを発表`;
-
-const lead = `2025年◯月◯日、**PRTIEM** は最新のプレリリースを公開し、業界に新たな可能性を提示しました。本記事では、その主要ポイントと今後の展望をまとめます。`;
-
-const content = `---
+const initialTitle = `# PRTIEM、新たな時代を切り拓く革新的ソリューションを発表`;
+const initialLead = `2025年◯月◯日、**PRTIEM** は最新のプレリリースを公開し、業界に新たな可能性を提示しました。本記事では、その主要ポイントと今後の展望をまとめます。`;
+const initialContent = `---
 
 ## 発表の概要
 
@@ -58,29 +54,81 @@ PRTIEM は今後、国内外のパートナーとの協業を拡大し、さら�
 
 プレリリースの詳細は [公式サイト](https://example.com) をご覧ください。
 `;
-
-
-const contact = `---
-
+const initialContact = `---
 
 ## お問い合わせ
 
-
-PRTIEM 広報担当
-E-mail: [info@example.com](mailto:info@example.com)
-電話: 03-1234-5678
+PRTIEM 広報担当  
+E-mail: [info@example.com](mailto:info@example.com)  
+電話: 03-1234-5678  
 公式サイト: [https://example.com](https://example.com)
 `;
 
-
-//マークダウンを表示
+//マークダウン表示
 export default function MarkdownPreview() {
-return (
-<article>
-<ReactMarkdown>{title}</ReactMarkdown>
-<ReactMarkdown>{lead}</ReactMarkdown>
-<ReactMarkdown>{content}</ReactMarkdown>
-<ReactMarkdown>{contact}</ReactMarkdown>
-</article>
-);
+
+  //編集用の状態変数
+  const [title, setTitle] = useState(initialTitle);
+  const [lead, setLead] = useState(initialLead);
+  const [content, setContent] = useState(initialContent);
+  const [contact, setContact] = useState(initialContact);
+  const [isEditing, setIsEditing] = useState(false);
+ 
+  
+  const handleSave = () => {
+    setIsEditing(false);
+  };
+
+  return (
+    <article className="max-w-3xl mx-auto p-4">
+      {isEditing ? (
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold">編集モード</h2>
+          <textarea
+            className="w-full border rounded p-2"
+            style={{ height: "80px" }}
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+          <textarea
+            className="w-full border rounded p-2"
+            style={{ height: "80px" }}
+            value={lead}
+            onChange={(e) => setLead(e.target.value)}
+          />
+          <textarea
+            className="w-full border rounded p-2"
+            style={{ height: "200px" }}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+          />
+          <textarea
+            className="w-full border rounded p-2"
+            style={{ height: "100px" }}
+            value={contact}
+            onChange={(e) => setContact(e.target.value)}
+          />
+          <button
+            onClick={handleSave}
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            保存
+          </button>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <ReactMarkdown>{title}</ReactMarkdown>
+          <ReactMarkdown>{lead}</ReactMarkdown>
+          <ReactMarkdown>{content}</ReactMarkdown>
+          <ReactMarkdown>{contact}</ReactMarkdown>
+          <button
+            onClick={() => setIsEditing(true)}
+            className="px-4 py-2 bg-gray-600 text-white rounded"
+          >
+            編集
+          </button>
+        </div>
+      )}
+    </article>
+  );
 }

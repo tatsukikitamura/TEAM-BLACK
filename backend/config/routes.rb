@@ -3,6 +3,8 @@ Rails.application.routes.draw do
   namespace :api do
     post "analyze",   to: "analyzes#create"
     post "validate",  to: "checks#validate"
+    post "shodo", to: "shodos#create"
+    get "shodo/:id", to: "shodos#show"
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

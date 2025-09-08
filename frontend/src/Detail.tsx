@@ -74,7 +74,7 @@ export default function MarkdownPreview() {
           />
           <div>現在 {titleCount} / {TITLE_MAX} 文字（Markdown除外）</div>
           {showTitleWarn && <div>文字数が少し多いです（{TITLE_WARN_THRESHOLD}文字以上）。</div>}
-          <h3 className="text-lg">サブタイトル</h3>
+
           <textarea
             className="w-full border rounded p-2"
             style={{ height: "80px" }}

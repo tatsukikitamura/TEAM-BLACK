@@ -24,15 +24,14 @@ E-mail: [info@example.com](mailto:info@example.com)
 // Markdownの装飾記号を除いてカウント
 function countMarkdownChars(text: string) {
   const stripped = text
-    .replace(/^#+\s*/gm, "") // 見出し #
-    .replace(/^-+\s*/gm, "") // 箇条書き -
-    .replace(/\*\*([^*]+)\*\*/g, "$1") // **太字**
-    .replace(/\*([^*]+)\*/g, "$1")     // *強調*
-    .replace(/`([^`]+)`/g, "$1");      // `コード`
+    .replace(/^#+\s*/gm, "")
+    .replace(/^-+\s*/gm, "")
+    .replace(/\*\*([^*]+)\*\*/g, "$1")
+    .replace(/\*([^*]+)\*/g, "$1")
+    .replace(/`([^`]+)`/g, "$1");
   return stripped.length;
 }
 
-// タイトル用しきい値
 const TITLE_WARN_THRESHOLD = 70;
 const TITLE_MAX = 200;
 
@@ -42,20 +41,19 @@ export default function MarkdownPreview() {
   const [content, setContent] = useState(initialContent);
   const [contact, setContact] = useState(initialContact);
   const [isEditing, setIsEditing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const titleCount = useMemo(() => countMarkdownChars(title), [title]);
-  const showTitleWarn = titleCount >= TITLE_WARN_THRESHOLD && titleCount <= TITLE_MAX;
+  const showTitleWarn =
+    titleCount >= TITLE_WARN_THRESHOLD && titleCount <= TITLE_MAX;
 
   const handleSave = () => {
-    setIsEditing(false);
-  };
-
-  // タイトルは200文字を超えたら反映しない
-  const handleTitleChange: React.ChangeEventHandler<HTMLTextAreaElement> = (e) => {
-    const next = e.target.value;
-    if (countMarkdownChars(next) <= TITLE_MAX) {
-      setTitle(next);
+    if (titleCount > TITLE_MAX) {
+      setError(`タイトルは ${TITLE_MAX} 文字以内にしてください（現在 ${titleCount} 文字）。`);
+      return;
     }
+    setError(null);
+    setIsEditing(false);
   };
 
   return (
@@ -65,35 +63,47 @@ export default function MarkdownPreview() {
           <h2 className="text-xl font-bold">編集モード</h2>
 
           {/* タイトル */}
-         
           <textarea
             className="w-full border rounded p-2"
             style={{ height: "80px" }}
             value={title}
-            onChange={handleTitleChange}
+            onChange={(e) => setTitle(e.target.value)}
           />
-          <div>現在 {titleCount} / {TITLE_MAX} 文字（Markdown除外）</div>
-          {showTitleWarn && <div>文字数が少し多いです（{TITLE_WARN_THRESHOLD}文字以上）。</div>}
+          <div>
+            現在 {titleCount} / {TITLE_MAX} 文字（Markdown除外）
+          </div>
+          {showTitleWarn && (
+            <div>文字数が少し多いです（{TITLE_WARN_THRESHOLD}文字以上）。</div>
+          )}
+          {titleCount > TITLE_MAX && (
+            <div className="text-red-600">200文字以上は保存できません。</div>
+          )}
+          {error && <div className="text-red-600">{error}</div>}
 
+          {/* サブタイトル */}
           <textarea
             className="w-full border rounded p-2"
             style={{ height: "80px" }}
             value={lead}
             onChange={(e) => setLead(e.target.value)}
           />
-          
+
+          {/* 本文 */}
           <textarea
             className="w-full border rounded p-2"
             style={{ height: "200px" }}
             value={content}
             onChange={(e) => setContent(e.target.value)}
           />
+
+          {/* 連絡 */}
           <textarea
             className="w-full border rounded p-2"
             style={{ height: "100px" }}
             value={contact}
             onChange={(e) => setContact(e.target.value)}
           />
+
           <button
             onClick={handleSave}
             className="px-4 py-2 bg-blue-600 text-black rounded"

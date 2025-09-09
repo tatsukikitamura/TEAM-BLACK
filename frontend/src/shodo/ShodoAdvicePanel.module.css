@@ -1,0 +1,152 @@
+/* すべてCSS Modulesでスコープされ、他CSSに影響しません */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  background: #fff;
+  color: #111;
+  width: min(960px, 94vw);
+  max-height: 90vh;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.2);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 12px 16px;
+  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.body {
+  padding: 16px;
+  overflow: auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.row { display: grid; gap: 6px; }
+.label { font-size: 12px; color: #555; }
+
+.input, .textarea {
+  width: 100%;
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.textarea { min-height: 120px; resize: vertical; }
+
+.help {
+  font-size: 12px;
+  color: #666;
+}
+
+.footer {
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn {
+  appearance: none;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 14px;
+  background: #111827;
+  color: #fff;
+  cursor: pointer;
+}
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+
+.btnGhost {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.resultBox {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 12px;
+  background: #fff;
+}
+
+.resultHeader {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 8px 12px;
+  font-size: 13px;
+}
+
+.msgList {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.badge {
+  display: inline-block;
+  background: #eef2ff;
+  color: #3730a3;
+  border: 1px solid #c7d2fe;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+}
+
+.error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  padding: 10px 12px;
+  border-radius: 10px;
+}
+
+.fab {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 999;
+  background: #2563eb;
+  color: #fff;
+  border: none;
+  padding: 12px 16px;
+  border-radius: 999px;
+  box-shadow: 0 8px 20px rgba(37,99,235,.3);
+  cursor: pointer;
+}
+.wrap { width: 380px; max-height: calc(100vh - 4rem); position: sticky; top: 1rem; background: #fff; color:#111; border:1px solid #e5e7eb; border-radius: 12px; padding: 12px; overflow:auto; box-shadow: 0 1px 2px rgba(0,0,0,.04);}
+.h2 { font-weight: 700; font-size: 16px; display:flex; align-items:center; justify-content:space-between; }
+.btn { border:none; border-radius: 8px; padding: 6px 10px; background:#111827; color:#fff; cursor:pointer;}
+.btnGhost { background:#f3f4f6; color:#111827; }
+.row { margin-top: 8px; }
+.badge { display:inline-block; background:#eef2ff; color:#3730a3; border:1px solid #c7d2fe; border-radius:999px; padding:2px 8px; font-size: 12px; }
+.box { border:1px solid #e5e7eb; border-radius: 10px; padding:10px; margin-top: 8px; background:#fff; }
+.err { color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; padding:8px 10px; border-radius:8px; }
+.list { margin: 6px 0 0; padding-left: 18px; }
+.kv { display:grid; grid-template-columns: 110px 1fr; gap: 6px 12px; font-size:13px; }

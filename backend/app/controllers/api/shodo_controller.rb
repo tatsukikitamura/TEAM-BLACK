@@ -1,14 +1,13 @@
 class Api::ShodoController < ApplicationController
   def create
     # フロントから送信されたデータを受け取る。許可するキーを限定。
-    p = params.permit(:title, :lead, :contact,
-                      options: [:type, :maxWaitMs, :pollIntervalMs],
-                      body: [:heading, :content])
+    p = params.permit(:title, :lead, :content, :contact,
+                      options: [:type, :maxWaitMs, :pollIntervalMs])
 
     # データを文字列に成形して変数に格納
     title = p[:title].to_s
     lead  = p[:lead].to_s
-    bodytxt = (p[:body] || []).map { |sec| [sec[:heading], sec[:content]].compact.join("\n") }.join("\n\n")
+    bodytxt = p[:content].to_s
     contact = p[:contact].to_s
 
     # すべてのフィールドが空の場合にエラーを発生させます。
@@ -125,8 +124,7 @@ class Api::ShodoController < ApplicationController
       # 校正結果を返す。
       {
         status: result["status"],
-        messages: msgs,
-        summary: summarize(msgs)
+        messages: msgs
       }
     end
   
@@ -146,44 +144,6 @@ class Api::ShodoController < ApplicationController
         "before" => m["before"] || "",
         "after"  => m["after"]  || "",
         "explanation" => m["message"] || ""
-      }
-    end
-  
-    # 校正結果の統計情報とサンプルを生成し、ユーザーが校正の概要を把握できるようにします。
-    # 例　
-    # 校正結果の要約:
-    # - 総数: 4件
-    # - ら抜き言葉: 2件
-    # - 敬語: 1件
-
-    # セクション別:
-    # - タイトル: 1件
-    # - リード: 2件
-    # - 本文: 1件
-    # - 連絡先: 0件
-
-    # ら抜き言葉の例:
-    # - リード: 食べれる → 食べられる
-    # - リード: 見れる → 見られる
-    def summarize(msgs)
-      ranuki = msgs.select { |m|
-        t = "#{m["type"]} #{m["message"]} #{m["explanation"]}"
-        t.include?("ら抜き") || t.include?("ら抜き言葉")
-      }
-      by_section = msgs.group_by { |m| m["section"] || "unknown" }.transform_values!(&:size)
-      {
-        counts: {
-          total: msgs.size,
-          ranuki: ranuki.size,
-          keigo: msgs.count { |m| m["type"].to_s.include?("敬語") }
-        },
-        bySection: {
-          "title" => by_section["title"].to_i,
-          "lead" => by_section["lead"].to_i,
-          "body" => by_section["body"].to_i,
-          "contact" => by_section["contact"].to_i
-        },
-        ranukiSamples: ranuki.first(5).map { |m| m.slice("section","before","after") }
       }
     end
   

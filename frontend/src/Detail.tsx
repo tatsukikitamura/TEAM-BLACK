@@ -46,7 +46,7 @@ export default function MarkdownPreview() {
   const [error, setError] = useState<string | null>(null);
 
   // React Select用の選択肢
-  const [selectedHooks, setSelectedHooks] = useState("timeliness");
+  const [selectedHooks, setSelectedHooks] = useState("");
 
   const hookOptions = [
     {

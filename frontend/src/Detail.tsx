@@ -2,6 +2,8 @@ import React, { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import AdvicePanel from "./AdvicePanel";
 import Select from "./components/Select";
+import type { AnalysisResult, PressReleaseData } from "./types/api";
+import { toSections } from "./AdvicePanel";
 
 // モックデータ（略）
 const initialTitle = `# PRTIEM、新たな時代を切り拓く革新的ソリューションを発表`;
@@ -37,6 +39,8 @@ function countMarkdownChars(text: string) {
 const TITLE_WARN_THRESHOLD = 70;
 const TITLE_MAX = 200;
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
+
 export default function MarkdownPreview() {
   const [title, setTitle] = useState(initialTitle);
   const [lead, setLead] = useState(initialLead);
@@ -44,8 +48,6 @@ export default function MarkdownPreview() {
   const [contact, setContact] = useState(initialContact);
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  // React Select用の選択肢
   const [selectedHooks, setSelectedHooks] = useState("");
 
   const hookOptions = [
@@ -82,20 +84,40 @@ export default function MarkdownPreview() {
 
   // アドバイス
   const [adviceOpen, setAdviceOpen] = useState(false);
-  const [adviceData, setAdviceData] = useState<{
-    title: string;
-    lead: string;
-    content: string;
-    contact: string;
-  } | null>(null);
+  const [adviceData, setAdviceData] = useState<PressReleaseData | null>(null);
 
-  const [adviceTrigger, setAdviceTrigger] = useState(0);
+  const [adviceError, setAdviceError] = useState<string | null>(null);
+  const [result, setResult] = useState<AnalysisResult | null>(null);
 
   // ★ アドバイスボタン押下時：その瞬間の値をスナップショットしてから開く
-  const openAdvice = () => {
+  const openAdvice = async () => {
     setAdviceData({ title, lead, content, contact }); // スナップショット
     setAdviceOpen(true);
-    setAdviceTrigger((n) => n + 1); // ★ここ
+
+    const payload = {
+      title,
+      lead,
+      content: toSections(content),
+      contact,
+      searchHook: selectedHooks, // ★ 追加
+      options: {
+        target_hooks: 3,
+        timeoutMs: 20000,
+      },
+    };
+    try {
+      const res = await fetch(`${API_BASE}/api/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      const json = await res.json();
+      console.log(json);
+      setResult(json);
+    } catch (e: any) {
+      setAdviceError(e?.message ?? "アドバイス取得に失敗しました");
+    }
   };
 
   const titleCount = useMemo(() => countMarkdownChars(title), [title]);
@@ -112,6 +134,8 @@ export default function MarkdownPreview() {
     setError(null);
     setIsEditing(false);
   };
+
+  console.log("result:", result);
 
   return (
     <article className="w-4/5 mx-auto p-4">
@@ -238,13 +262,9 @@ export default function MarkdownPreview() {
           <AdvicePanel
             open={adviceOpen}
             onClose={() => setAdviceOpen(false)}
-            title={adviceData.title}
-            lead={adviceData.lead}
-            content={adviceData.content}
-            contact={adviceData.contact}
-            analyzeOptions={{ hooksThreshold: 3, timeoutMs: 20000 }}
+            result={result}
+            error={adviceError}
             placement="side"
-            trigger={adviceTrigger}
           />
         )}
       </div>

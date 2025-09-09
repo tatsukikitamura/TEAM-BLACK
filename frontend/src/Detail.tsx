@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import AdvicePanel from "./AdvicePanel";
 import Select from "./components/Select";
+import ShodoAdviceLauncher from "./shodo/ShodoAdviceLauncher";
 
 // モックデータ（略）
 const initialTitle = `# PRTIEM、新たな時代を切り拓く革新的ソリューションを発表`;
@@ -248,6 +249,11 @@ export default function MarkdownPreview() {
           />
         )}
       </div>
+     <ShodoAdviceLauncher
+      variant="inline"
+      label="Shodoアドバイス"
+      values={{ title, lead, bodyMd: content, contact }}  // これで空にならない
+      />
     </article>
   );
 }

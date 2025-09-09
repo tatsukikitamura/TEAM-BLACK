@@ -30,23 +30,18 @@ Content-Type: application/json
 
 **リクエストボディ**
 
-```json
+``````json
 {
-  "title": "プレスリリースのタイトル",
-  "lead": "リード文",
-  "body": [
-    {
-      "heading": "セクション見出し",
-      "content": "セクション内容"
-    }
-  ],
-  "contact": "連絡先情報",
+  "title": "チーム開発×データ分析に挑む3Daysハッカソン受付開始",
+  "lead": "プレスリリース配信サービス「PR TIMES」等を運営する株式会社PR TIMES（東京都港区、代表取締役：山口拓己、東証プライSプライム：3922）は、2026・27年卒業予定のエンジニア志望学生を対象に、「PR TIMES HACKATHON 2025 Summer」を開催します。",
+  "content": "## 同世代エンジニアとつながり、チーム開発の経験を積める3日間\n\nPR TIMESハッカソンは、2016年より開催している内定直結型のハッカソンイベントです。2025年9月8日〜10日の3日間でWebサービスの開発を行い、特に優秀な方には年収500万円以上の中途採用基準での内定をお出しします。",
+  "contact": "【お問い合わせ】株式会社PR TIMES 広報部 / https://prtimes.co.jp/",
   "options": {
     "hooksThreshold": 3,
     "timeoutMs": 20000
-  }
-}
-```
+  },
+  "searchHook": "地域性"
+}```
 
 **パラメータ**
 
@@ -54,10 +49,9 @@ Content-Type: application/json
 | ------------------------ | ------- | ---- | --------------------------------------------- |
 | `title`                  | string  | 必須 | プレスリリースのタイトル                      |
 | `lead`                   | string  | 必須 | リード文（概要）                              |
-| `body`                   | array   | 必須 | 本文セクションの配列                          |
-| `body[].heading`         | string  | 必須 | セクションの見出し                            |
-| `body[].content`         | string  | 必須 | セクションの内容                              |
+| `content`                | string  | 必須 | 本文内容（マークダウン形式）                  |
 | `contact`                | string  | 必須 | 連絡先情報                                    |
+| `searchHook`             | string  | 任意 | 特定のフック名を指定（例: "地域性"）。指定した場合、そのフックの改善提案を生成する |
 | `options.hooksThreshold` | integer | 任意 | フック検出の閾値（デフォルト: 3）             |
 | `options.timeoutMs`      | integer | 任意 | タイムアウト時間（ミリ秒、デフォルト: 20000） |
 
@@ -65,53 +59,69 @@ Content-Type: application/json
 
 **成功時 (200 OK)**
 
+AI分析結果と改善提案を返します。
+
+| フィールド | 型 | 説明 |
+|-----------|----|----|
+| `ai` | object | AI分析結果 |
+| `ai.fiveW2H` | object | 5W2H+1W分析結果 |
+| `ai.fiveW2H.title` | object | タイトルの5W2H+1W分析 |
+| `ai.fiveW2H.title.missing` | array | 不足している要素のリスト |
+| `ai.fiveW2H.title.suggestion` | string | タイトル改善の提案文 |
+| `ai.fiveW2H.lead` | object | リード文の5W2H+1W分析 |
+| `ai.fiveW2H.body` | object | 本文の5W2H+1W分析 |
+| `ai.hooks` | object | 9つのフック分析結果 |
+| `ai.hooks.scores` | array | 各フックのスコア（0.0-1.0） |
+| `ai.hooks.scores[].name` | string | フック名 |
+| `ai.hooks.scores[].score` | number | スコア（0.0-1.0） |
+| `ai.hooks.suggestion` | array | フック改善の提案文配列 |
+
+#### フック改善提案（`hooks.suggestion`）の条件分岐
+
+`hooks.suggestion`の内容は、リクエストに含まれる`searchHook`パラメータの有無によって変わります。
+
+1. **`searchHook`が指定された場合:**
+   - AIは指定されたフック（例: "地域性"）を強化するために、本文の内容に基づいた**具体的な改善案（リライト案など）**を生成します。
+
+2. **`searchHook`が指定されていない場合:**
+   - AIは検出されたスコア全体を評価し、スコアが高いフックや改善すべきフックについて**汎用的なアドバイス**を生成します。
+
 ```json
 {
   "ai": {
     "fiveW2H": {
       "title": {
-        "who": 1,
-        "what": 0.5,
-        "where": 0,
-        "when": 1,
-        "why": 0.5,
-        "how": 0,
-        "howMuch": 0,
-        "toWhom": 1,
-        "missing": ["What", "Where", "How", "HowMuch"],
-        "evidence": ["具体的な証拠文"]
+        "missing": ["Where", "When", "HowMuch"],
+        "suggestion": "タイトルに「いつ(When)」の情報と、具体的な「場所(Where)」や「規模・価格(HowMuch)」の要素を追加することで、読者の関心をより強く引くことができます。"
       },
       "lead": {
-        /* 同様の構造 */
+        "missing": ["Why"],
+        "suggestion": "リード文に「なぜ(Why)」この取り組みを行うのか、背景や目的を簡潔に加えると、記事の説得力が高まります。"
       },
       "body": {
-        /* 同様の構造 */
+        "missing": [],
+        "suggestion": "本文の構成要素は十分に満たされています。各セクションの内容が具体的で分かりやすいです。"
       }
     },
     "hooks": {
-      "detected": [
-        {
-          "name": "新規性/独自性",
-          "score": 0.8,
-          "evidence": ["初回開催", "独自の取り組み"]
-        }
+      "scores": [
+        { "name": "新規性/独自性", "score": 0.9 },
+        { "name": "地域性", "score": 0.8 },
+        { "name": "社会性/公益性", "score": 0.7 },
+        { "name": "最上級/希少性", "score": 0.5 },
+        { "name": "話題性", "score": 0.4 },
+        { "name": "画像/映像", "score": 0.3 },
+        { "name": "時流/季節性", "score": 0.2 },
+        { "name": "意外性", "score": 0.1 },
+        { "name": "逆説/対立", "score": 0.0 }
       ],
-      "missing": ["時流/季節性", "地域性"],
-      "target": 3
-    },
-    "contact": {
-      "exists": true,
-      "confidence": 0.9,
-      "evidence": ["お問い合わせ先が明記されている"]
+      "suggestion": [
+        "フックとして「新規性/独自性」(スコア0.9)と「地域性」(スコア0.8)が特に強く検出されました。",
+        "これらの強みを活かし、見出しや本文でさらに具体的にアピールすることで、メディア露出の可能性を高められます。"
+      ]
     }
-  },
-  "suggestions": [
-    "いつ（When）実施/開始かを明記",
-    "地名・会場・URLなど「Where」を明記",
-    "背景/目的（Why）を1文で明示"
-  ]
-}
-```
+  }
+}````
 
 **エラー時**
 
@@ -142,17 +152,14 @@ Content-Type: application/json
 
 **リクエストボディ**
 
-```json
+
+
+`````json
 {
-  "title": "プレスリリースのタイトル",
-  "lead": "リード文",
-  "body": [
-    {
-      "heading": "セクション見出し",
-      "content": "セクション内容"
-    }
-  ],
-  "contact": "連絡先情報",
+  "title": "チーム開発×データ分析に挑む3Daysハッカソン受付開始",
+  "lead": "プレスリリース配信サービス「PR TIMES」等を運営する株式会社PR TIMES（東京都港区、代表取締役：山口拓己、東証プライSプライム：3922）は、2026・27年卒業予定のエンジニア志望学生を対象に、「PR TIMES HACKATHON 2025 Summer」を開催します。",
+  "content": "## 同世代エンジニアとつながり、チーム開発の経験を積める3日間\n\nPR TIMESハッカソンは、2016年より開催している内定直結型のハッカソンイベントです。2025年9月8日〜10日の3日間でWebサービスの開発を行い、特に優秀な方には年収500万円以上の中途採用基準での内定をお出しします。",
+  "contact": "【お問い合わせ】株式会社PR TIMES 広報部 / https://prtimes.co.jp/",
   "options": {
     "type": "text",
     "maxWaitMs": 6000,
@@ -186,34 +193,35 @@ Content-Type: application/json
     "messages": [
       {
         "type": "ら抜き言葉",
-        "before": "食べれる",
-        "after": "食べられる",
+        "section": "lead",
         "offset": 45,
         "length": 3,
-        "message": "ら抜き言葉の修正",
-        "explanation": "ら抜き言葉は正しくは「食べられる」です",
-        "section": "lead"
+        "before": "食べれる",
+        "after": "食べられる",
+        "explanation": "ら抜き言葉です。正しくは「食べられる」です。"
+      },
+      {
+        "type": "敬語",
+        "section": "body",
+        "offset": 102,
+        "length": 4,
+        "before": "言った",
+        "after": "申した",
+        "explanation": "より丁寧な敬語表現があります。"
       }
     ],
     "summary": {
       "counts": {
-        "total": 4,
-        "ranuki": 2,
+        "total": 2,
+        "ranuki": 1,
         "keigo": 1
       },
       "bySection": {
         "title": 0,
-        "lead": 2,
-        "body": 2,
+        "lead": 1,
+        "body": 1,
         "contact": 0
-      },
-      "ranukiSamples": [
-        {
-          "section": "lead",
-          "before": "食べれる",
-          "after": "食べられる"
-        }
-      ]
+      }
     }
   }
 }
@@ -264,10 +272,37 @@ GET /api/shodo/abc123
   "shodo": {
     "status": "done",
     "messages": [
-      /* 校正メッセージの配列 */
+      {
+        "type": "ら抜き言葉",
+        "section": "lead",
+        "offset": 45,
+        "length": 3,
+        "before": "食べれる",
+        "after": "食べられる",
+        "explanation": "ら抜き言葉です。正しくは「食べられる」です。"
+      },
+      {
+        "type": "敬語",
+        "section": "body",
+        "offset": 102,
+        "length": 4,
+        "before": "言った",
+        "after": "申した",
+        "explanation": "より丁寧な敬語表現があります。"
+      }
     ],
     "summary": {
-      /* 校正結果の要約 */
+      "counts": {
+        "total": 2,
+        "ranuki": 1,
+        "keigo": 1
+      },
+      "bySection": {
+        "title": 0,
+        "lead": 1,
+        "body": 1,
+        "contact": 0
+      }
     }
   }
 }
@@ -325,13 +360,12 @@ GET /api/shodo/abc123
 | フィールド    | 型      | 説明                                               |
 | ------------- | ------- | -------------------------------------------------- |
 | `type`        | string  | 校正の種類（例: "ら抜き言葉", "敬語"）             |
-| `before`      | string  | 修正前のテキスト                                   |
-| `after`       | string  | 修正後のテキスト                                   |
+| `section`     | string  | セクション名（"title", "lead", "body", "contact"） |
 | `offset`      | integer | テキスト内での位置（文字数）                       |
 | `length`      | integer | 対象テキストの長さ                                 |
-| `message`     | string  | 校正メッセージ                                     |
+| `before`      | string  | 修正前のテキスト                                   |
+| `after`       | string  | 修正後のテキスト                                   |
 | `explanation` | string  | 詳細な説明                                         |
-| `section`     | string  | セクション名（"title", "lead", "body", "contact"） |
 
 ### 校正結果の要約
 
@@ -400,9 +434,10 @@ curl -X POST http://localhost:3000/api/shodo \
 
 以下の環境変数が必要です：
 
-- `OPENAI_API_KEY`: OpenAIのapiキー
+- `OPENAI_API_KEY`: OpenAI の api キー
 - `OPENAI_MODEL`: OpenAI モデル名（デフォルト: "gpt-4o-mini"）
 - `SHODO_API_URL`: Shodo API のベース URL
 - `SHODO_TOKEN`: Shodo API の認証トークン
 - `SHODO_TIMEOUT_SEC`: Shodo API のタイムアウト時間（秒、デフォルト: 10）
 - `SHODO_OPEN_TIMEOUT_SEC`: Shodo API の接続タイムアウト時間（秒、デフォルト: 5）
+``````

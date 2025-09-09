@@ -1,26 +1,15 @@
-// src/AdivicePane.tsx
-import React, { useEffect, useState } from "react";
 import type { AnalysisResult } from "./types/api";
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  title: string;
-  lead: string;
-  content: string;
-  contact: string;
-  search_hook: string; // ★ 追加
-  analyzeOptions?: {
-    hooksThreshold?: number;
-    timeoutMs?: number;
-  };
+  result: AnalysisResult | null;
+  error: string | null;
   /** 'modal' | 'side' の2モード。既定は 'modal' */
   placement?: "modal" | "side";
   /** ボタン押下ごとにインクリメントして再取得トリガーにする */
   trigger?: number; // ★ トップレベルに置く
 };
-
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
 // API仕様に合わせて body を [{heading, content}] に分割（## 見出しで切る）
 // eslint-disable-next-line react-refresh/only-export-components
@@ -56,74 +45,19 @@ export function toSections(
 }
 
 export default function AdvicePanel({
-  open,
   onClose,
-  title,
-  lead,
-  content,
-  contact,
-  search_hook,
-  analyzeOptions,
+  result,
+  error,
   placement = "modal",
-  trigger, // ★ 受け取る
 }: Props) {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<AnalysisResult | null>(null);
-
-  // ★ 開いた時＆triggerが変わった時だけ実行（編集では発火しない）
-  useEffect(() => {
-    if (!open) return;
-    if (trigger === undefined) return; // 初回レンダーで未定義のときはスキップ
-    let aborted = false;
-
-    const payload = {
-      title,
-      lead,
-      content: toSections(content),
-      contact,
-      searchHook: search_hook, // ★ 追加
-      options: {
-        target_hooks: analyzeOptions?.hooksThreshold ?? 3,
-        timeoutMs: analyzeOptions?.timeoutMs ?? 20000,
-      },
-    };
-
-    (async () => {
-      setLoading(true);
-      setError(null);
-      setResult(null);
-      try {
-        const res = await fetch(`${API_BASE}/api/analyze`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) throw new Error(`API error: ${res.status}`);
-        const json = await res.json();
-        if (!aborted) setResult(json);
-      } catch (e: any) {
-        if (!aborted) setError(e?.message ?? "アドバイス取得に失敗しました");
-      } finally {
-        if (!aborted) setLoading(false);
-      }
-    })();
-
-    return () => {
-      aborted = true;
-    };
-  }, [open, trigger]); // ★ ここだけを見る
-
-  if (!open) return null;
-
-  const hookSuggestions: string[] = result?.hooks?.suggestion ?? [];
-  const missingTitle: string[] = result?.fiveW2H?.title?.missing ?? [];
-  const missingLead: string[] = result?.fiveW2H?.lead?.missing ?? [];
-  const missingBody: string[] = result?.fiveW2H?.body?.missing ?? [];
-  const hooksDetected = result?.hooks?.scores ?? [];
-  const titleSuggestion = result?.fiveW2H?.title?.suggestion ?? "";
-  const leadSuggestion = result?.fiveW2H?.lead?.suggestion ?? "";
-  const bodySuggestion = result?.fiveW2H?.body?.suggestion ?? "";
+  const hookSuggestions: string[] = result?.ai?.hooks?.suggestion ?? [];
+  const missingTitle: string[] = result?.ai?.fiveW2H?.title?.missing ?? [];
+  const missingLead: string[] = result?.ai?.fiveW2H?.lead?.missing ?? [];
+  const missingBody: string[] = result?.ai?.fiveW2H?.body?.missing ?? [];
+  const hooksDetected = result?.ai?.hooks?.scores ?? [];
+  const titleSuggestion = result?.ai?.fiveW2H?.title?.suggestion ?? "";
+  const leadSuggestion = result?.ai?.fiveW2H?.lead?.suggestion ?? "";
+  const bodySuggestion = result?.ai?.fiveW2H?.body?.suggestion ?? "";
 
   const inner = (
     <div className="space-y-4">
@@ -134,10 +68,10 @@ export default function AdvicePanel({
         </button>
       </div>
 
-      {loading && <div>解析中です…</div>}
+      {result == null && <div>解析中です…</div>}
       {error && <div className="text-red-600">{error}</div>}
 
-      {!loading && !error && result && (
+      {result && (
         <div className="space-y-4">
           {/* フック改善提案 */}
           {hookSuggestions.length > 0 && (

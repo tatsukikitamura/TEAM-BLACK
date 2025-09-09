@@ -14,14 +14,16 @@ export interface HookScore {
 
 // OpenAI分析のAPIレスポンス
 export interface AnalysisResult {
-  fiveW2H: {
-    title: FiveW2HSection;
-    lead: FiveW2HSection;
-    body: FiveW2HSection;
-  };
-  hooks: {
-    scores: HookScore[];
-    suggestion: string[];
+  ai: {
+    fiveW2H: {
+      title: FiveW2HSection;
+      lead: FiveW2HSection;
+      body: FiveW2HSection;
+    };
+    hooks: {
+      scores: HookScore[];
+      suggestion: string[];
+    };
   };
 }
 

@@ -1,27 +1,18 @@
 class Api::ShodoController < ApplicationController
-    def create
-      # フロントから送信されたデータを受け取る。許可するキーを限定。
-      p = params.permit(:title, :lead, :contact,
-                        options: [:type, :maxWaitMs, :pollIntervalMs],
-                        body: [:heading, :content],
-                        shodo: [:title, :lead, :contact, 
-                                { options: [:type, :maxWaitMs, :pollIntervalMs] },
-                                { body: [:heading, :content] }])
-  
-      # shodoパラメータを優先して使用し、フォールバックとして通常のパラメータを使用します。
-      # p[:shodo]が存在する場合はその値を使用。存在しない場合は空ハッシュ{}を使用。
-      shodo_params = p[:shodo] || {}
-      # shodo_params[:title]が存在する場合はその値を使用。存在しない場合はp[:title]の値を使用。
-      title   = (shodo_params[:title] || p[:title]).to_s
-      # shodo_params[:lead]が存在する場合はその値を使用。存在しない場合はp[:lead]の値を使用。
-      lead    = (shodo_params[:lead] || p[:lead]).to_s
-      # shodo_params[:body]が存在する場合はその値を使用。存在しない場合はp[:body]の値を使用。
-      bodytxt = ((shodo_params[:body] || p[:body]) || []).map { |sec| [sec[:heading], sec[:content]].compact.join("\n") }.join("\n\n")
-      # shodo_params[:contact]が存在する場合はその値を使用。存在しない場合はp[:contact]の値を使用。
-      contact = (shodo_params[:contact] || p[:contact]).to_s
+  def create
+    # フロントから送信されたデータを受け取る。許可するキーを限定。
+    p = params.permit(:title, :lead, :contact,
+                      options: [:type, :maxWaitMs, :pollIntervalMs],
+                      body: [:heading, :content])
 
-      # すべてのフィールドが空の場合にエラーを発生させます。
-      raise ActionController::ParameterMissing, "content is empty" if [title, lead, bodytxt, contact].all?(&:blank?)
+    # データを文字列に成形して変数に格納
+    title = p[:title].to_s
+    lead  = p[:lead].to_s
+    bodytxt = (p[:body] || []).map { |sec| [sec[:heading], sec[:content]].compact.join("\n") }.join("\n\n")
+    contact = p[:contact].to_s
+
+    # すべてのフィールドが空の場合にエラーを発生させます。
+    raise ActionController::ParameterMissing, "パラメータが不足しています" if [title, lead, bodytxt, contact].all?(&:blank?)
   
       # Shodo API用のデータ準備とAPI呼び出しです。プレスリリースの校正・チェック機能を実行します。
       # build_compositeメソッドでShodo API用のデータ形式に変換。4つのフィールドを統合し1つのテキストに結合してcompositeに格納。build_compositeは下で定義している。
@@ -66,7 +57,7 @@ class Api::ShodoController < ApplicationController
       end
     # 必須パラメータが欠落している場合は、BadRequestを返す。ステータスコードは400。
     rescue ActionController::ParameterMissing => e
-      render json: { error: { code: "BadRequest", message: e.message } }, status: :bad_request
+      render json: { error: { code: "BadRequest", message: "パラメータが不足しています" } }, status: :bad_request
     # Shodo API関連のエラーの場合は、BadGatewayを返す。ステータスコードは502。
     rescue ShodoService::ShodoError => e
       render json: { error: { code: "ShodoError", message: e.message } }, status: :bad_gateway
@@ -141,14 +132,20 @@ class Api::ShodoController < ApplicationController
   
     # Shodo APIからの校正メッセージを標準化するメソッドです。異なるフィールド名を統一し、一貫した形式に変換します。
     def normalize_message(m)
+      length_value = if m["index"] && m["index_to"]
+                      m["index_to"] - m["index"]
+                    else
+                      nil
+                    end
+      
       {
-        "type" => m["type"] || m["category"] || "",
-        "before" => m["before"] || m["src"] || "",
-        "after"  => m["after"]  || m["dst"] || "",
-        "offset" => m["offset"] || m["pos"],
-        "length" => m["length"] || m["len"],
-        "message" => m["message"] || m["title"] || "",
-        "explanation" => m["explanation"] || m["detail"] || ""
+        "type" => m["code"] || "",
+        "section" => "", # 後でセクション推定で設定
+        "offset" => m["index"],
+        "length" => length_value,
+        "before" => m["before"] || "",
+        "after"  => m["after"]  || "",
+        "explanation" => m["message"] || ""
       }
     end
   

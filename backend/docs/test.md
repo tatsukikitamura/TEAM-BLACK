@@ -33,7 +33,7 @@ Finished in 27.22 seconds (files took 3.76 seconds to load)
 - 目的: 入力テキスト（markdown）を解析し、AIによる提案（aiキー）を返すことを確認
 - テスト観点:
   - 正常系: 200 OK が返り、JSON に ai キーが含まれる
-  - 異常系: 必須パラメータ省略時の挙動（現在のテストは仕様検討中のため要見直し）
+  - 異常系: 必須パラメータ省略時の挙動
 
 2) Image API（/api/image）
 - 目的: 画像URLを OpenAI に渡し、判定結果テキストを `result` として返すことを確認
@@ -58,10 +58,5 @@ Finished in 27.22 seconds (files took 3.76 seconds to load)
 
 実行方法
 ```bash
-cd backend
 bundle exec rspec --format documentation
 ```
-
-補足・今後の改善
-- Analyze 異常系テストの期待値が仕様コメントと不一致（400 を想定しつつ実装は 200 を返している）。実装またはテストのどちらかを揃える必要あり。
-- 画像/校正の外部APIはスタブしているため、ネットワーク不要で高速・安定に実行可能。

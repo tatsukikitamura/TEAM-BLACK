@@ -1,47 +1,45 @@
 # frozen_string_literal: true
 class Api::AnalyzesController < ApplicationController
   def create
+    # フロントから送信されたデータを受け取る。許可するキーを限定。
     p = params.permit(:markdown, :title, :lead, :contact,
                       options: [:hooksThreshold, :timeoutMs],
                       images: [:url, :role],
                       body: [:heading, :content])
 
-    # 1) 入力正規化：分割入力が基本。markdownは後方互換
+    # データを文字列に成形して変数に格納。　
+    # bodyは配列。各セクションをheadingとcontentに分けて、それぞれを空行で連結してbodytxtに格納。
     title = p[:title].to_s
     lead  = p[:lead].to_s
     bodytxt = (p[:body] || []).map { |sec| [sec[:heading], sec[:content]].compact.join("\n") }.join("\n\n")
     contact = p[:contact].to_s
 
-    if title.blank? && lead.blank? && p[:markdown].present?
-      sections = MarkdownParser.extract_sections(p[:markdown])
-      title   = MarkdownParser.plain(sections["title"].to_s)
-      lead    = MarkdownParser.plain(sections["lead"].to_s)
-      bodytxt = MarkdownParser.plain(sections["body"].to_s)
-      contact = MarkdownParser.plain(sections["contact"].to_s)
-    end
-
+    # フックの閾値とタイムアウト時間を変数に格納。
     hooks_threshold = p.dig(:options, :hooksThreshold) || 3
     timeout_ms      = p.dig(:options, :timeoutMs) || 20000
 
-    # 2) OpenAI（AI判定のみ）
+    # services/open_ai_judge.rb に引数を渡して、AI判定を行う。結果をaiに格納。
+    # build_suggestions にaiを渡して、AI判定の結果を元に、改善提案を生成。結果をsuggestionsに格納。
     ai = OpenAiJudge.call(
       title: title, lead: lead, body: bodytxt, contact: contact,
       target_hooks: hooks_threshold, timeout_ms: timeout_ms
     )
-
     render json: { ai: ai, suggestions: build_suggestions(ai, limit: 5) }, status: :ok
+
+  # 必須パラメータが欠落している場合は、BadRequestを返す。ステータスコードは400。
   rescue ActionController::ParameterMissing => e
     render json: { error: { code: "BadRequest", message: e.message } }, status: :bad_request
+  # AI判定の結果が空の場合や、無効なJSONの場合、api呼び出し中になんらかのエラーが発生した場合は、BadGatewayを返す。ステータスコードは502。
   rescue OpenAiJudge::AiError => e
     render json: { error: { code: "AiError", message: e.message } }, status: :bad_gateway
   end
 
   private
-
+  # AI判定の結果を元に、改善提案を生成。結果をsuggestionsに格納。
   def build_suggestions(ai, limit: 5)
     out = []
 
-    # 5W2H+1W（優先：When, Where, Why, HowMuch, ToWhom, How, Who, What）
+    # 5W2H+1W（優先：When, Where, Why, HowMuch, ToWhom, How, Who, What）の不足を抽出。
     miss = (%w[title lead body].flat_map { |k| ai.dig("fiveW2H", k, "missing") || [] }).uniq
     priorities = %w[When Where Why HowMuch ToWhom How Who What]
     miss.sort_by { |k| priorities.index(k) || 999 }.each do |m|
@@ -57,7 +55,7 @@ class Api::AnalyzesController < ApplicationController
       end
     end
 
-    # 9フック（優先：新規性/独自性 → 時流/季節性 → 地域性 → 社会性/公益性 → 最上級/希少性 → 話題性 → 画像/映像 → 意外性 → 逆説/対立）
+    # 9フック（優先：新規性/独自性 → 時流/季節性 → 地域性 → 社会性/公益性 → 最上級/希少性 → 話題性 → 画像/映像 → 意外性 → 逆説/対立）の不足を抽出。
     hooks_missing = ai.dig("hooks","missing") || []
     hook_priority = [
       "新規性/独自性","時流/季節性","地域性","社会性/公益性",
@@ -76,9 +74,10 @@ class Api::AnalyzesController < ApplicationController
     }
     hooks_missing.sort_by { |k| hook_priority.index(k) || 999 }.each { |k| out << hook_map[k] if hook_map[k] }
 
-    # 連絡先
+    # 連絡先の不足を抽出。 連絡先がない場合は、連絡先を追加する提案を追加。
     out << "連絡先（会社/部署/担当/メール/電話/プレスキットURL）を本文末尾に追記" if ai.dig("contact","exists") == false
 
+    # 不足を抽出した結果を返す。
     out.uniq.first(limit)
   end
 end

@@ -1,90 +1,137 @@
-# app/controllers/api/shodos_controller.rb
-class Api::ShodosController < ApplicationController
-    protect_from_forgery with: :null_session
-  
+class Api::ShodoController < ApplicationController
     def create
-      p = params.permit(:markdown, :title, :lead, :contact,
+      # フロントから送信されたデータを受け取る。許可するキーを限定。
+      p = params.permit(:title, :lead, :contact,
                         options: [:type, :maxWaitMs, :pollIntervalMs],
-                        body: [:heading, :content])
+                        body: [:heading, :content],
+                        shodo: [:title, :lead, :contact, 
+                                { options: [:type, :maxWaitMs, :pollIntervalMs] },
+                                { body: [:heading, :content] }])
   
-      # 1) 入力正規化（分割優先、markdownは後方互換）
-      title   = p[:title].to_s
-      lead    = p[:lead].to_s
-      bodytxt = (p[:body] || []).map { |sec| [sec[:heading], sec[:content]].compact.join("\n") }.join("\n\n")
-      contact = p[:contact].to_s
-  
-      if title.blank? && lead.blank? && p[:markdown].present?
-        sections = MarkdownParser.extract_sections(p[:markdown])
-        title   = MarkdownParser.plain(sections["title"].to_s)
-        lead    = MarkdownParser.plain(sections["lead"].to_s)
-        bodytxt = MarkdownParser.plain(sections["body"].to_s)
-        contact = MarkdownParser.plain(sections["contact"].to_s)
-      end
-  
+      # shodoパラメータを優先して使用し、フォールバックとして通常のパラメータを使用します。
+      # p[:shodo]が存在する場合はその値を使用。存在しない場合は空ハッシュ{}を使用。
+      shodo_params = p[:shodo] || {}
+      # shodo_params[:title]が存在する場合はその値を使用。存在しない場合はp[:title]の値を使用。
+      title   = (shodo_params[:title] || p[:title]).to_s
+      # shodo_params[:lead]が存在する場合はその値を使用。存在しない場合はp[:lead]の値を使用。
+      lead    = (shodo_params[:lead] || p[:lead]).to_s
+      # shodo_params[:body]が存在する場合はその値を使用。存在しない場合はp[:body]の値を使用。
+      bodytxt = ((shodo_params[:body] || p[:body]) || []).map { |sec| [sec[:heading], sec[:content]].compact.join("\n") }.join("\n\n")
+      # shodo_params[:contact]が存在する場合はその値を使用。存在しない場合はp[:contact]の値を使用。
+      contact = (shodo_params[:contact] || p[:contact]).to_s
+
+      # すべてのフィールドが空の場合にエラーを発生させます。
       raise ActionController::ParameterMissing, "content is empty" if [title, lead, bodytxt, contact].all?(&:blank?)
   
-      # 2) Shodoへ投入（ひとまず1テキストに連結）
+      # Shodo API用のデータ準備とAPI呼び出しです。プレスリリースの校正・チェック機能を実行します。
+      # build_compositeメソッドでShodo API用のデータ形式に変換。4つのフィールドを統合し1つのテキストに結合してcompositeに格納。build_compositeは下で定義している。
       composite = build_composite(title:, lead:, bodytxt:, contact:)
+      # デフォルトは"text"。Shodo APIの処理タイプを指定。
       type          = (p.dig(:options, :type) || "text")
+      # デフォルトは6000。Shodo APIの最大待ち時間を指定。
       max_wait_ms   = (p.dig(:options, :maxWaitMs) || 6000).to_i
+      # デフォルトは500。Shodo APIのポーリング間隔を指定。サーバーに結果を確認しに行く頻度のこと。
       poll_interval = (p.dig(:options, :pollIntervalMs) || 500).to_i
-  
+      
+      # Shodo APIに校正リクエストを送信し、校正ジョブのIDを取得する処理。ShodoService.lint!はservices/shodo_service.rbで定義している。 
       lint_id = ShodoService.lint!(composite, type: type)
   
-      # 3) 短時間だけ同期ポーリング（UX改善）
+      # ポーリングループ。Shodo APIの校正結果を定期的に確認する処理です。
+      # 変数の初期化
       waited = 0
       result = nil
+      # 最大6秒間ポーリングを継続。max_wait_msは6000。
       while waited < max_wait_ms
+        # ShodoService.fetchメソッドで校正結果を取得する。ShodoService.fetchはservices/shodo_service.rbで定義している。
         result = ShodoService.fetch(lint_id)
+        # result["status"]が"done"か"failed"の場合は、ポーリングを終了。
         break if result["status"] == "done" || result["status"] == "failed"
+        # 指定時間だけ待つ。poll_intervalはデフォルトの場合500。
         sleep(poll_interval / 1000.0)
+        # 累積時間を更新。
         waited += poll_interval
       end
   
+      # 校正結果に基づくレスポンス生成。
+      # 校正が正常に完了した場合。decorate_resultは下で定義している。ステータスコードは200。
       if result && result["status"] == "done"
         render json: { shodo: decorate_result(result, composite:) }, status: :ok
+      # 校正が失敗した場合。ステータスコードは502。
       elsif result && result["status"] == "failed"
         render json: { error: { code: "ShodoError", message: "Shodo failed" } }, status: :bad_gateway
+      # 校正が進行中またはタイムアウトの場合。ステータスコードは202。
+      # retryAfterMsはポーリング間隔を秒単位で返す。
       else
-        render json: { shodo: { status: "processing", task_id: lint_id } }, status: :accepted
+        render json: { shodo: { status: "processing", task_id: lint_id, retryAfterMs: poll_interval } }, status: :accepted
       end
+    # 必須パラメータが欠落している場合は、BadRequestを返す。ステータスコードは400。
     rescue ActionController::ParameterMissing => e
       render json: { error: { code: "BadRequest", message: e.message } }, status: :bad_request
+    # Shodo API関連のエラーの場合は、BadGatewayを返す。ステータスコードは502。
+    rescue ShodoService::ShodoError => e
+      render json: { error: { code: "ShodoError", message: e.message } }, status: :bad_gateway
     end
   
+    # 校正結果の取得APIです。校正ジョブのIDを使って結果を取得し、状態に応じてレスポンスを返します。
     def show
+      # 校正ジョブのIDを取得。
       lint_id = params[:id]
+      # ShodoService.fetchメソッドで校正結果を取得。services/shodo_service.rbで定義している。
       result = ShodoService.fetch(lint_id)
+      # result["status"]が"done"の場合は、校正結果を返す。
       if result["status"] == "done"
         # show時は composite を知らないので section 特定は省略 or client側で保持した composite を送らせる設計も可
         render json: { shodo: decorate_result(result) }, status: :ok
+      # 完了時以外の時。
       else
         render json: { shodo: { status: result["status"] } }, status: :ok
       end
-    rescue => e
+    # Shodo API関連のエラーの場合は、BadGatewayを返す。ステータスコードは502。
+    rescue ShodoService::ShodoError => e
       render json: { error: { code: "ShodoError", message: e.message } }, status: :bad_gateway
     end
   
     private
   
-    # セクション目印を差し込む（offset→section推定に使う）
+    # プレスリリースの４つの部分を統合して1つのテキストに結合するメソッドです。Shodo APIに送信するための形式に変換します。
     def build_composite(title:, lead:, bodytxt:, contact:)
+      # 空の配列を作成。
       parts = []
+      # titleが空でない場合のみ配列に追加。
       parts << "[TITLE]\n#{title}"     unless title.blank?
+      # leadが空でない場合のみ配列に追加。
       parts << "[LEAD]\n#{lead}"       unless lead.blank?
+      # bodytxtが空でない場合のみ配列に追加。
       parts << "[BODY]\n#{bodytxt}"    unless bodytxt.blank?
+      # contactが空でない場合のみ配列に追加。
       parts << "[CONTACT]\n#{contact}" unless contact.blank?
+      # 配列の各要素を\n\nで結合。
       parts.join("\n\n")
     end
   
-    # Shodoの messages を整形し、ら抜き等のサマリを付与
+    # Shodo APIからの校正結果を装飾・整形するメソッドです。フロントエンドが使いやすい形式に変換します。
+    # resultはShodo APIからの校正結果。compositeはプレスリリースの４つの部分を統合したテキスト。
     def decorate_result(result, composite: nil)
+      # result["messages"]を配列に変換し、各メッセージをnormalize_messageで正規化。
       msgs = Array(result["messages"]).map { |m| normalize_message(m) }
-      if composite # section推定
+      
+      # compositeが存在する場合のみ実行。
+      # 校正メッセージの位置から、どのセクション（タイトル、リード、本文、連絡先）に属するかを推定する処理です。
+      if composite
+        # 元テキストを解析して各セクションの位置を特定。セクション名とその開始・終了位置のマップを作成。section_index_mapは下で定義している。
         index_map = section_index_map(composite)
+        # 実際の例
+        #index_map = {
+        # "TITLE" => { start: 0, end: 25 },      # [TITLE]から次の空行まで
+        # "LEAD" => { start: 27, end: 80 },       # [LEAD]から次の空行まで
+        #"BODY" => { start: 82, end: 120 },      # [BODY]から次の空行まで
+        #"CONTACT" => { start: 122, end: 150 }  # [CONTACT]から最後まで }
+        
+        # 校正メッセージの位置から、どのセクション（タイトル、リード、本文、連絡先）に属するかを推定する処理です。guess_sectionは下で定義している。
         msgs.each { |m| m["section"] = guess_section(m["offset"], index_map) if m["offset"] }
       end
   
+      # 校正結果を返す。
       {
         status: result["status"],
         messages: msgs,
@@ -92,6 +139,7 @@ class Api::ShodosController < ApplicationController
       }
     end
   
+    # Shodo APIからの校正メッセージを標準化するメソッドです。異なるフィールド名を統一し、一貫した形式に変換します。
     def normalize_message(m)
       {
         "type" => m["type"] || m["category"] || "",
@@ -104,6 +152,22 @@ class Api::ShodosController < ApplicationController
       }
     end
   
+    # 校正結果の統計情報とサンプルを生成し、ユーザーが校正の概要を把握できるようにします。
+    # 例　
+    # 校正結果の要約:
+    # - 総数: 4件
+    # - ら抜き言葉: 2件
+    # - 敬語: 1件
+
+    # セクション別:
+    # - タイトル: 1件
+    # - リード: 2件
+    # - 本文: 1件
+    # - 連絡先: 0件
+
+    # ら抜き言葉の例:
+    # - リード: 食べれる → 食べられる
+    # - リード: 見れる → 見られる
     def summarize(msgs)
       ranuki = msgs.select { |m|
         t = "#{m["type"]} #{m["message"]} #{m["explanation"]}"
@@ -126,7 +190,14 @@ class Api::ShodosController < ApplicationController
       }
     end
   
-    # [TITLE]等の見出しから文字位置を取得
+    # [TITLE]等の文字列から文字位置を取得。
+    # 例
+    # index_map = {
+    #   "title" => 0,
+    #   "lead" => 26,
+    #   "body" => 81,
+    #   "contact" => 121
+    # }
     def section_index_map(composite)
       idx = {}
       idx["title"]   = composite.index("[TITLE]")   || -1
@@ -136,8 +207,29 @@ class Api::ShodosController < ApplicationController
       idx
     end
   
+    
+    # 校正メッセージのオフセット位置から、どのセクション（タイトル、リード、本文、連絡先）に属するかを推定するメソッド
+    #
+    # アルゴリズム:
+    # 1. オフセット位置がセクション開始位置以降にあるセクションを抽出
+    # 2. その中で開始位置が最大（最も近い）のセクションを選択
+    # 3. 該当するセクションがない場合は"body"をデフォルトとして返す
+    #
+    # 例:
+    #   idx = {"title" => 0, "lead" => 26, "body" => 81, "contact" => 121}
+    #   guess_section(30, idx)  # => "lead" (26が最大で30 >= 26を満たす)
+    #   guess_section(90, idx)  # => "body" (81が最大で90 >= 81を満たす)
+    #   guess_section(5, idx)   # => "title" (0が最大で5 >= 0を満たす)
+    #
+    # 注意:
+    # - この推定は簡易的なもので、セクションの終了位置は考慮しない
+    # - セクション境界付近では不正確な結果になる可能性がある
+    # - idxの値が-1の場合は存在しないセクションとして扱われる
+    #
+    # @param offset [Integer] 校正メッセージのテキスト内での位置（文字数）
+    # @param idx [Hash] セクション名とその開始位置のマップ {"title" => 0, "lead" => 26, ...}
+    # @return [String] 推定されたセクション名（"title", "lead", "body", "contact"）
     def guess_section(offset, idx)
-      # 最も近いセクションを雑に推定（offset >= セクション開始の最大）
       cand = idx.select { |_k, v| v >= 0 && offset >= v }.max_by { |_k, v| v }
       cand ? cand.first : "body"
     end

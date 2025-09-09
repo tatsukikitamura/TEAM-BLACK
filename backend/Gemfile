@@ -46,6 +46,7 @@ group :development, :test do
   gem "rubocop-rails-omakase", require: false
 
   gem "ruby-openai", require: "openai"
+  gem "faraday-retry"
 
   group :development, :test do
     gem "rspec-rails"

@@ -5,6 +5,7 @@ Rails.application.routes.draw do
     post "validate",  to: "checks#validate"
     post "shodo", to: "shodo#create"
     get "shodo/:id", to: "shodo#show"
+    post "image", to: "images#validate"
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

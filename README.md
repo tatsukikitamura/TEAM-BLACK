@@ -32,18 +32,6 @@ TEAM BLACK　
 VITE_API_BASE_URL=http://localhost:3000
 ```
 
-### よく使うコマンド一覧
-- フロントエンド
-  - 開発起動: `cd frontend && npm ci && npm run dev`
-  - 本番ビルド: `npm run build`
-  - Lint: `npm run lint`
-- バックエンド
-  - 依存インストール: `cd backend && bundle install`
-  - 開発サーバー: `bin/rails server`
-  - RSpec 実行: `bundle exec rspec`
-  - RuboCop: `bundle exec rubocop`
-  - Brakeman: `bundle exec brakeman`
-
 ### ディレクトリ構成（抜粋）
 ```
 TEAM-BLACK/

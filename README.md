@@ -1,4 +1,12 @@
+TEAM BLACK　
 プレスリリースを改善するためのレビュー機能をもったWebサービス
+
+### メンバー
+
+・佐藤 鴻成
+・葉山 風宇刀
+・北村 健紀
+・森澤 翔吾
 
 ### プロジェクトの概要
 - **目的**: プレスリリースを入力すると、AIによる「改善提案」と、日本語校正サービス（Shodo）による校正結果を返します。
@@ -16,9 +24,7 @@
 バックエンドの Shodo 連携で使用します。`backend/.env` 等で設定してください（`dotenv-rails` あり）。
 - `SHODO_API_URL`: Shodo API のベースURL（例: `https://api.example.com/`）
 - `SHODO_TOKEN`: Shodo API の Bearer トークン
-- オプション:
-  - `SHODO_TIMEOUT_SEC` (デフォルト 10)
-  - `SHODO_OPEN_TIMEOUT_SEC` (デフォルト 5)
+- `OPENAI_API_KEY`：OPENAIのAPIを利用するためにKEYが必要となります。
 
 フロントエンドの API 接続先:
 ```bash
@@ -62,42 +68,10 @@ TEAM-BLACK/
         api/
           analyzes_spec.rb
           shodo_spec.rb
+    docs/
+      api.md
     Gemfile
     Dockerfile
   README.md
 ```
-
-### 開発環境の構築方法
-1. リポジトリを取得
-   ```bash
-   git clone <this-repo>
-   cd TEAM-BLACK
-   ```
-2. フロントエンドのセットアップ
-   ```bash
-   cd frontend
-   cp .env.example .env  # なければ手動で .env を作成
-   echo "VITE_API_BASE_URL=http://localhost:3000" > .env
-   npm ci
-   npm run dev
-   ```
-3. バックエンドのセットアップ
-   ```bash
-   cd ../backend
-   bundle install
-   # 必要に応じて .env を作成して Shodo のキー等を設定
-   # echo "SHODO_API_URL=..." >> .env
-   # echo "SHODO_TOKEN=..."   >> .env
-   bin/rails db:prepare
-   bin/rails server
-   ```
-4. 動作確認
-   - `POST /api/analyze` に `title/lead/body/contact` を送ると改善提案が返ります
-   - `POST /api/shodo` に本文等を送ると校正ジョブが作成されます
-   - `GET /api/shodo/:id` で結果取得
-
-### テスト
-```bash
-cd backend
-bundle exec rspec --format documentation
-```
+### backend説明

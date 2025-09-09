@@ -14,6 +14,7 @@ Rails.application.routes.draw do
     
     # 書道結果取得：特定のIDの書道解析結果を取得する
     get "shodo/:id", to: "shodo#show"
+    post "image", to: "images#validate"
   end
 
   # ヘルスチェックエンドポイント

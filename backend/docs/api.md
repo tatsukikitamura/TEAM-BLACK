@@ -210,20 +210,7 @@ Content-Type: application/json
         "after": "申した",
         "explanation": "より丁寧な敬語表現があります。"
       }
-    ],
-    "summary": {
-      "counts": {
-        "total": 2,
-        "ranuki": 1,
-        "keigo": 1
-      },
-      "bySection": {
-        "title": 0,
-        "lead": 1,
-        "body": 1,
-        "contact": 0
-      }
-    }
+    ]
   }
 }
 ```
@@ -291,20 +278,7 @@ GET /api/shodo/abc123
         "after": "申した",
         "explanation": "より丁寧な敬語表現があります。"
       }
-    ],
-    "summary": {
-      "counts": {
-        "total": 2,
-        "ranuki": 1,
-        "keigo": 1
-      },
-      "bySection": {
-        "title": 0,
-        "lead": 1,
-        "body": 1,
-        "contact": 0
-      }
-    }
+    ]
   }
 }
 ```
@@ -442,4 +416,3 @@ curl -X POST http://localhost:3000/api/shodo \
 - `SHODO_TIMEOUT_SEC`: Shodo API のタイムアウト時間（秒、デフォルト: 10）
 - `SHODO_OPEN_TIMEOUT_SEC`: Shodo API の接続タイムアウト時間（秒、デフォルト: 5）
 ``````
-

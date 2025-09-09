@@ -1,7 +1,16 @@
 {
-  "title":"テストタイトル",
-  "lead":"肉が食べれるお店をご紹介します。",
-  "body":[{"heading":"詳細","content":"本気だしてやれば出来る。見れる・来れる なども含む。"}],
-  "contact":"press@example.com",
-  "options": { "maxWaitMs": 6000, "pollIntervalMs": 500 }
+  "title": "新商品発表会のご案内",
+  "lead": "来月開催される新商品発表会についてご案内いたします。",
+  "body": [
+    {
+      "heading": "開催概要",
+      "content": "詳細な内容がここに記載されます。食べれるはら抜き言葉のテストです。"
+    }
+  ],
+  "contact": "お問い合わせはこちらまで",
+  "options": {
+    "type": "text",
+    "maxWaitMs": 10000,
+    "pollIntervalMs": 1000
+  }
 }

@@ -49,7 +49,9 @@ export default function MarkdownPreview() {
 
   const handleSave = () => {
     if (titleCount > TITLE_MAX) {
-      setError(`タイトルは ${TITLE_MAX} 文字以内にしてください（現在 ${titleCount} 文字）。`);
+      setError(
+        `タイトルは ${TITLE_MAX} 文字以内にしてください（現在 ${titleCount} 文字）。`
+      );
       return;
     }
     setError(null);
@@ -63,12 +65,15 @@ export default function MarkdownPreview() {
           <h2 className="text-xl font-bold">編集モード</h2>
 
           {/* タイトル */}
-          <textarea
-            className="w-full border rounded p-2"
-            style={{ height: "80px" }}
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-          />
+          <div>
+            <h3 className="text-lg font-semibold mb-2">タイトル</h3>
+            <textarea
+              className="w-full border rounded p-2"
+              style={{ height: "80px" }}
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+          </div>
           <div>
             現在 {titleCount} / {TITLE_MAX} 文字（Markdown除外）
           </div>
@@ -81,28 +86,37 @@ export default function MarkdownPreview() {
           {error && <div className="text-red-600">{error}</div>}
 
           {/* サブタイトル */}
-          <textarea
-            className="w-full border rounded p-2"
-            style={{ height: "80px" }}
-            value={lead}
-            onChange={(e) => setLead(e.target.value)}
-          />
+          <div>
+            <h3 className="text-lg font-semibold mb-2">サブタイトル</h3>
+            <textarea
+              className="w-full border rounded p-2"
+              style={{ height: "80px" }}
+              value={lead}
+              onChange={(e) => setLead(e.target.value)}
+            />
+          </div>
 
           {/* 本文 */}
-          <textarea
-            className="w-full border rounded p-2"
-            style={{ height: "200px" }}
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-          />
+          <div>
+            <h3 className="text-lg font-semibold mb-2">本文</h3>
+            <textarea
+              className="w-full border rounded p-2"
+              style={{ height: "200px" }}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+            />
+          </div>
 
-          {/* 連絡 */}
-          <textarea
-            className="w-full border rounded p-2"
-            style={{ height: "100px" }}
-            value={contact}
-            onChange={(e) => setContact(e.target.value)}
-          />
+          {/* 連絡先 */}
+          <div>
+            <h3 className="text-lg font-semibold mb-2">お問い合わせ</h3>
+            <textarea
+              className="w-full border rounded p-2"
+              style={{ height: "100px" }}
+              value={contact}
+              onChange={(e) => setContact(e.target.value)}
+            />
+          </div>
 
           <button
             onClick={handleSave}

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import AdvicePanel from "./AdvicePanel";
+import Select from "./components/Select";
 
 // モックデータ（略）
 const initialTitle = `# PRTIEM、新たな時代を切り拓く革新的ソリューションを発表`;
@@ -44,21 +45,58 @@ export default function MarkdownPreview() {
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // React Select用の選択肢
+  const [selectedHooks, setSelectedHooks] = useState("");
+
+  const hookOptions = [
+    {
+      value: "時流/季節性",
+      label:
+        "時流/季節性: 季節/時流/トレンドや特定日付と結びつく情報（例: バレンタイン、2/22 など）",
+    },
+    { value: "意外性", label: "意外性: 「まさか」を実現、常識とズラす要素" },
+    {
+      value: "逆説/対立",
+      label: "逆説/対立: 定説と真逆、または対立構図の提示",
+    },
+    { value: "地域性", label: "地域性: 具体的な県名・市区名・ご当地性" },
+    {
+      value: "話題性",
+      label: "話題性: 既に話題の事柄/作品/トレンドへの便乗・コラボ",
+    },
+    {
+      value: "社会性/公益性",
+      label: "社会性/公益性: 公益性・社会課題・制度/政策との接続",
+    },
+    { value: "新規性/独自性", label: "新規性/独自性: 初/唯一/独自の取り組み" },
+    {
+      value: "最上級/希少性",
+      label: "最上級/希少性: 世界一/◯◯限定/希少素材 等",
+    },
+    {
+      value: "画像/映像",
+      label:
+        "画像/映像: インパクトのあるビジュアルの存在・計画（画像が記事採否に影響しうる）",
+    },
+  ];
+
   // アドバイス
   const [adviceOpen, setAdviceOpen] = useState(false);
   const [adviceData, setAdviceData] = useState<{
-    title: string; lead: string; content: string; contact: string;
+    title: string;
+    lead: string;
+    content: string;
+    contact: string;
   } | null>(null);
 
   const [adviceTrigger, setAdviceTrigger] = useState(0);
 
   // ★ アドバイスボタン押下時：その瞬間の値をスナップショットしてから開く
   const openAdvice = () => {
-  setAdviceData({ title, lead, content, contact }); // スナップショット
-  setAdviceOpen(true);
-  setAdviceTrigger((n) => n + 1);                   // ★ここ
+    setAdviceData({ title, lead, content, contact }); // スナップショット
+    setAdviceOpen(true);
+    setAdviceTrigger((n) => n + 1); // ★ここ
   };
-  
 
   const titleCount = useMemo(() => countMarkdownChars(title), [title]);
   const showTitleWarn =
@@ -66,7 +104,9 @@ export default function MarkdownPreview() {
 
   const handleSave = () => {
     if (titleCount > TITLE_MAX) {
-      setError(`タイトルは ${TITLE_MAX} 文字以内にしてください（現在 ${titleCount} 文字）。`);
+      setError(
+        `タイトルは ${TITLE_MAX} 文字以内にしてください（現在 ${titleCount} 文字）。`
+      );
       return;
     }
     setError(null);
@@ -83,6 +123,17 @@ export default function MarkdownPreview() {
             <div className="space-y-4">
               <h2 className="text-xl font-bold">編集モード</h2>
 
+              {/* フックの選択 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2">フックの選択</h3>
+                <Select
+                  options={hookOptions}
+                  value={selectedHooks}
+                  onChange={setSelectedHooks}
+                  placeholder="利用したいフックを選択してください"
+                  className="w-full"
+                />
+              </div>
               {/* タイトル */}
               <div>
                 <h3 className="text-lg font-semibold mb-2">タイトル</h3>
@@ -93,9 +144,19 @@ export default function MarkdownPreview() {
                   onChange={(e) => setTitle(e.target.value)}
                 />
               </div>
-              <div>現在 {titleCount} / {TITLE_MAX} 文字（Markdown除外）</div>
-              {showTitleWarn && <div>文字数が少し多いです（{TITLE_WARN_THRESHOLD}文字以上）。</div>}
-              {titleCount > TITLE_MAX && <div className="text-red-600">200文字以上は保存できません。</div>}
+              <div>
+                現在 {titleCount} / {TITLE_MAX} 文字（Markdown除外）
+              </div>
+              {showTitleWarn && (
+                <div>
+                  文字数が少し多いです（{TITLE_WARN_THRESHOLD}文字以上）。
+                </div>
+              )}
+              {titleCount > TITLE_MAX && (
+                <div className="text-red-600">
+                  200文字以上は保存できません。
+                </div>
+              )}
               {error && <div className="text-red-600">{error}</div>}
 
               {/* サブタイトル */}
@@ -132,11 +193,17 @@ export default function MarkdownPreview() {
               </div>
 
               <div className="flex gap-2">
-                <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-black rounded">
+                <button
+                  onClick={handleSave}
+                  className="px-4 py-2 bg-blue-600 text-black rounded"
+                >
                   保存
                 </button>
                 {/* ★ ここは必ず openAdvice を呼ぶ */}
-                <button onClick={openAdvice} className="px-4 py-2 bg-amber-400 text-black rounded">
+                <button
+                  onClick={openAdvice}
+                  className="px-4 py-2 bg-amber-400 text-black rounded"
+                >
                   アドバイス
                 </button>
               </div>
@@ -155,7 +222,10 @@ export default function MarkdownPreview() {
                   編集
                 </button>
                 {/* プレビューからもアドバイス可能にするならこれを残す */}
-                <button onClick={openAdvice} className="px-4 py-2 bg-amber-400 text-black rounded">
+                <button
+                  onClick={openAdvice}
+                  className="px-4 py-2 bg-amber-400 text-black rounded"
+                >
                   アドバイス
                 </button>
               </div>

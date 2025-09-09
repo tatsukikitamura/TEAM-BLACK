@@ -31,6 +31,7 @@ Content-Type: application/json
 **リクエストボディ**
 
 ``````json
+
 {
   "title": "チーム開発×データ分析に挑む3Daysハッカソン受付開始",
   "lead": "プレスリリース配信サービス「PR TIMES」等を運営する株式会社PR TIMES（東京都港区、代表取締役：山口拓己、東証プライSプライム：3922）は、2026・27年卒業予定のエンジニア志望学生を対象に、「PR TIMES HACKATHON 2025 Summer」を開催します。",
@@ -441,3 +442,4 @@ curl -X POST http://localhost:3000/api/shodo \
 - `SHODO_TIMEOUT_SEC`: Shodo API のタイムアウト時間（秒、デフォルト: 10）
 - `SHODO_OPEN_TIMEOUT_SEC`: Shodo API の接続タイムアウト時間（秒、デフォルト: 5）
 ``````
+

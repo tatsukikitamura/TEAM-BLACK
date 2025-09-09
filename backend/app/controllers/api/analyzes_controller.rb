@@ -16,11 +16,33 @@ class Api::AnalyzesController < ApplicationController
     hooks_threshold = p.dig(:options, :hooksThreshold) || 3
     timeout_ms      = p.dig(:options, :timeoutMs) || 20000
 
+    # --- ▼▼▼ DBから類似・成功事例を検索 ▼▼▼ ---
+    # pg_trgmを使って類似タイトルを検索し、いいね数順に上位3件を取得
+    similar_releases = Release.find_by_sql([<<-SQL, { current_title: title, limit: 3 }])
+      SELECT
+        r.title,
+        rs.like_count,
+        similarity(r.title, :current_title) AS sim
+      FROM
+        release r
+      INNER JOIN
+        release_statistics rs ON r.company_id = rs.company_id AND r.release_id = rs.release_id
+      WHERE
+        r.title % :current_title -- % 演算子で類似度が高いものを絞り込む
+      ORDER BY
+        sim DESC, rs.like_count DESC -- 類似度を最優先、次点でいいね数
+      LIMIT :limit
+    SQL
+
+    # 取得したタイトルだけを配列に変換する
+    success_examples = similar_releases.pluck(:title)
+    # --- ▲▲▲ DB検索ここまで ▲▲▲ ---
+
     # services/open_ai_judge.rb に引数を渡して、AI判定を行う。結果をaiに格納
     ai = OpenAiJudge.call(
       title: title, lead: lead, body: content, contact: contact,
       target_hooks: hooks_threshold, timeout_ms: timeout_ms,
-      search_hook: search_hook
+      search_hook: search_hook, success_examples: success_examples
     )
     render json: { ai: ai }, status: :ok
 

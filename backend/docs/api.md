@@ -30,8 +30,7 @@ Content-Type: application/json
 
 **リクエストボディ**
 
-``````json
-
+`````json
 {
   "title": "チーム開発×データ分析に挑む3Daysハッカソン受付開始",
   "lead": "プレスリリース配信サービス「PR TIMES」等を運営する株式会社PR TIMES（東京都港区、代表取締役：山口拓己、東証プライSプライム：3922）は、2026・27年卒業予定のエンジニア志望学生を対象に、「PR TIMES HACKATHON 2025 Summer」を開催します。",
@@ -138,6 +137,15 @@ AI分析結果と改善提案を返します。
 }
 ```
 
+```json
+{
+  "error": {
+    "code": "AiError",
+    "message": "AI分析でエラーが発生しました"
+  }
+}
+```
+
 ### 2. プレスリリース校正
 
 #### POST `/api/shodo`
@@ -153,9 +161,7 @@ Content-Type: application/json
 
 **リクエストボディ**
 
-
-
-`````json
+```json
 {
   "title": "チーム開発×データ分析に挑む3Daysハッカソン受付開始",
   "lead": "プレスリリース配信サービス「PR TIMES」等を運営する株式会社PR TIMES（東京都港区、代表取締役：山口拓己、東証プライSプライム：3922）は、2026・27年卒業予定のエンジニア志望学生を対象に、「PR TIMES HACKATHON 2025 Summer」を開催します。",
@@ -175,9 +181,7 @@ Content-Type: application/json
 | ------------------------ | ------- | ---- | ----------------------------------------- |
 | `title`                  | string  | 必須 | プレスリリースのタイトル                  |
 | `lead`                   | string  | 必須 | リード文（概要）                          |
-| `body`                   | array   | 必須 | 本文セクションの配列                      |
-| `body[].heading`         | string  | 必須 | セクションの見出し                        |
-| `body[].content`         | string  | 必須 | セクションの内容                          |
+| `content`                | string  | 必須 | 本文内容（マークダウン形式）              |
 | `contact`                | string  | 必須 | 連絡先情報                                |
 | `options.type`           | string  | 任意 | 校正タイプ（デフォルト: "text"）          |
 | `options.maxWaitMs`      | integer | 任意 | 最大待機時間（ミリ秒、デフォルト: 6000）  |
@@ -231,6 +235,15 @@ Content-Type: application/json
 
 - **400 Bad Request**: 必須パラメータが不足
 - **502 Bad Gateway**: Shodo API エラー
+
+```json
+{
+  "error": {
+    "code": "BadRequest",
+    "message": "パラメータが不足しています"
+  }
+}
+```
 
 ```json
 {
@@ -369,12 +382,7 @@ curl -X POST http://localhost:3000/api/analyze \
   -d '{
     "title": "チーム開発×データ分析に挑む3Daysハッカソン受付開始",
     "lead": "プレスリリース配信サービス「PR TIMES」等を運営する株式会社PR TIMES（東京都港区、代表取締役：山口拓己、東証プライム：3922）は、2026・27年卒業予定のエンジニア志望学生を対象に、「PR TIMES HACKATHON 2025 Summer」を開催します。",
-    "body": [
-      {
-        "heading": "同世代エンジニアとつながり、チーム開発の経験を積める3日間",
-        "content": "PR TIMESハッカソンは、2016年より開催している内定直結型のハッカソンイベントです。2025年9月8日〜10日の3日間でWebサービスの開発を行い、特に優秀な方には年収500万円以上の中途採用基準での内定をお出しします。"
-      }
-    ],
+    "content": "## 同世代エンジニアとつながり、チーム開発の経験を積める3日間\n\nPR TIMESハッカソンは、2016年より開催している内定直結型のハッカソンイベントです。2025年9月8日〜10日の3日間でWebサービスの開発を行い、特に優秀な方には年収500万円以上の中途採用基準での内定をお出しします。",
     "contact": "【お問い合わせ】株式会社PR TIMES 広報部 / https://prtimes.co.jp/",
     "options": {
       "hooksThreshold": 3
@@ -390,12 +398,7 @@ curl -X POST http://localhost:3000/api/shodo \
   -d '{
     "title": "新商品発表会のご案内",
     "lead": "来月開催される新商品発表会についてご案内いたします。",
-    "body": [
-      {
-        "heading": "開催概要",
-        "content": "詳細な内容がここに記載されます。食べれるはら抜き言葉のテストです。"
-      }
-    ],
+    "content": "## 開催概要\n\n詳細な内容がここに記載されます。食べれるはら抜き言葉のテストです。",
     "contact": "お問い合わせはこちらまで",
     "options": {
       "type": "text",
@@ -415,4 +418,4 @@ curl -X POST http://localhost:3000/api/shodo \
 - `SHODO_TOKEN`: Shodo API の認証トークン
 - `SHODO_TIMEOUT_SEC`: Shodo API のタイムアウト時間（秒、デフォルト: 10）
 - `SHODO_OPEN_TIMEOUT_SEC`: Shodo API の接続タイムアウト時間（秒、デフォルト: 5）
-``````
+`````

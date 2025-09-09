@@ -48,6 +48,8 @@ group :development, :test do
   gem "ruby-openai", require: "openai"
   gem "faraday-retry"
 
+  gem "pg"
+
   group :development, :test do
     gem "rspec-rails"
     gem "dotenv-rails"

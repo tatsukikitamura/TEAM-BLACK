@@ -4,7 +4,7 @@
 
 この API は、プレスリリースの分析と校正を行うサービスです。以下の 2 つの主要機能を提供します：
 
-1. **プレスリリース分析** (`/api/analyze`) - OpenAI を使用した 5W2H+1W 分析と 9つのフック検出
+1. **プレスリリース分析** (`/api/analyze`) - OpenAI を使用した 5W2H+1W 分析と 9 つのフック検出
 2. **プレスリリース校正** (`/api/shodo`) - Shodo API を使用した日本語校正
 
 ## ベース URL
@@ -355,22 +355,22 @@ GET /api/shodo/abc123
 | `after`       | string  | 修正後のテキスト                                   |
 | `explanation` | string  | 詳細な説明                                         |
 
-### 校正結果の要約
+### 校正結果の構造
 
-- **counts**: 校正件数の統計
-  - `total`: 総校正件数
-  - `ranuki`: ら抜き言葉の件数
-  - `keigo`: 敬語の件数
-- **bySection**: セクション別の校正件数
-- **ranukiSamples**: ら抜き言葉の修正例
+校正結果は以下の構造で返されます：
+
+- **status**: 校正処理の状態（"done" または "processing"）
+- **messages**: 校正メッセージの配列
+  - 各メッセージには `type`、`section`、`offset`、`length`、`before`、`after`、`explanation` が含まれます
 
 ## エラーコード
 
-| コード       | HTTP ステータス | 説明                       |
-| ------------ | --------------- | -------------------------- |
-| `BadRequest` | 400             | リクエストパラメータが不正 |
-| `AiError`    | 502             | AI 分析でエラーが発生      |
-| `ShodoError` | 502             | Shodo API でエラーが発生   |
+| コード         | HTTP ステータス | 説明                       |
+| -------------- | --------------- | -------------------------- |
+| `BadRequest`   | 400             | リクエストパラメータが不正 |
+| `DatabaseError`| 500             | データベース処理でエラーが発生 |
+| `AiError`      | 502             | AI 分析でエラーが発生      |
+| `ShodoError`   | 502             | Shodo API でエラーが発生   |
 
 ## 使用例
 

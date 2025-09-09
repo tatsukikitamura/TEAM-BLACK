@@ -62,4 +62,3 @@ TEAM-BLACK/
     Dockerfile
   README.md
 ```
-### backend説明

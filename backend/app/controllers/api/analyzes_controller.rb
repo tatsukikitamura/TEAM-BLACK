@@ -5,7 +5,7 @@ class Api::AnalyzesController < ApplicationController
     p = params.permit(:title, :lead, :content, :contact, :searchHook,
                       options: [:hooksThreshold, :timeoutMs])
 
-    # データを文字列に成形して変数に格納
+    # データをそれぞれ文字列に成形して変数に格納
     title = p[:title].to_s
     lead  = p[:lead].to_s
     content = p[:content].to_s
@@ -31,5 +31,4 @@ class Api::AnalyzesController < ApplicationController
   rescue OpenAiJudge::AiError => e
     render json: { error: { code: "AiError", message: e.message } }, status: :bad_gateway
   end
-
 end

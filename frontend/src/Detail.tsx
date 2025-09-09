@@ -2,6 +2,8 @@ import React, { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import AdvicePanel from "./AdvicePanel";
 import Select from "./components/Select";
+import type { PressReleaseData } from "./types/api";
+import { toSections } from "./AdvicePanel";
 
 // モックデータ（略）
 const initialTitle = `# PRTIEM、新たな時代を切り拓く革新的ソリューションを発表`;
@@ -36,6 +38,8 @@ function countMarkdownChars(text: string) {
 
 const TITLE_WARN_THRESHOLD = 70;
 const TITLE_MAX = 200;
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:3000";
 
 export default function MarkdownPreview() {
   const [title, setTitle] = useState(initialTitle);
@@ -82,20 +86,35 @@ export default function MarkdownPreview() {
 
   // アドバイス
   const [adviceOpen, setAdviceOpen] = useState(false);
-  const [adviceData, setAdviceData] = useState<{
-    title: string;
-    lead: string;
-    content: string;
-    contact: string;
-  } | null>(null);
+  const [adviceData, setAdviceData] = useState<PressReleaseData | null>(null);
 
   const [adviceTrigger, setAdviceTrigger] = useState(0);
 
   // ★ アドバイスボタン押下時：その瞬間の値をスナップショットしてから開く
-  const openAdvice = () => {
+  const openAdvice = async () => {
     setAdviceData({ title, lead, content, contact }); // スナップショット
     setAdviceOpen(true);
+
     setAdviceTrigger((n) => n + 1); // ★ここ
+
+    const payload = {
+      title,
+      lead,
+      content: toSections(content),
+      contact,
+      searchHook: selectedHooks, // ★ 追加
+      options: {
+        target_hooks: 3,
+        timeoutMs: 20000,
+      },
+    };
+
+    const res = await fetch(`${API_BASE}/api/analyze`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    console.log(await res.json());
   };
 
   const titleCount = useMemo(() => countMarkdownChars(title), [title]);
@@ -242,6 +261,7 @@ export default function MarkdownPreview() {
             lead={adviceData.lead}
             content={adviceData.content}
             contact={adviceData.contact}
+            search_hook={selectedHooks}
             analyzeOptions={{ hooksThreshold: 3, timeoutMs: 20000 }}
             placement="side"
             trigger={adviceTrigger}

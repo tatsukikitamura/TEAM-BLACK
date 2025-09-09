@@ -5,6 +5,7 @@ import "./index.css";
 import Detail from "./Detail.tsx";
 import "./App.css";
 //import TestAPI from "./test_component/TestAPI.tsx";
+//import ShodoAdviceLauncher from "./shodo/ShodoAdviceLauncher";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

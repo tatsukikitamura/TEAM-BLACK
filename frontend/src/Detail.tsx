@@ -4,6 +4,7 @@ import AdvicePanel from "./AdvicePanel";
 import Select from "./components/Select";
 import type { AnalysisResult, PressReleaseData } from "./types/api";
 import { toSections } from "./AdvicePanel";
+import ShodoAdviceLauncher from "./shodo/ShodoAdviceLauncher";
 
 // モックデータ（略）
 const initialTitle = `# PRTIEM、新たな時代を切り拓く革新的ソリューションを発表`;
@@ -268,6 +269,11 @@ export default function MarkdownPreview() {
           />
         )}
       </div>
+     <ShodoAdviceLauncher
+      variant="inline"
+      label="Shodoアドバイス"
+      values={{ title, lead, bodyMd: content, contact }}  // これで空にならない
+      />
     </article>
   );
 }

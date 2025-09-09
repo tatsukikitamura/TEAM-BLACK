@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import AdvicePanel from "./AdvicePanel";
 
-//モックデータ
+// モックデータ（略）
 const initialTitle = `# PRTIEM、新たな時代を切り拓く革新的ソリューションを発表`;
 const initialLead = `2025年◯月◯日、**PRTIEM** は最新のプレリリースを公開し、業界に新たな可能性を提示しました。本記事では、その主要ポイントと今後の展望をまとめます。`;
 const initialContent = `---
@@ -21,7 +22,7 @@ E-mail: [info@example.com](mailto:info@example.com)
 公式サイト: [https://example.com](https://example.com)
 `;
 
-// Markdownの装飾記号を除いてカウント
+// Markdown装飾を除いた文字数
 function countMarkdownChars(text: string) {
   const stripped = text
     .replace(/^#+\s*/gm, "")
@@ -43,15 +44,29 @@ export default function MarkdownPreview() {
   const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // アドバイス
+  const [adviceOpen, setAdviceOpen] = useState(false);
+  const [adviceData, setAdviceData] = useState<{
+    title: string; lead: string; content: string; contact: string;
+  } | null>(null);
+
+  const [adviceTrigger, setAdviceTrigger] = useState(0);
+
+  // ★ アドバイスボタン押下時：その瞬間の値をスナップショットしてから開く
+  const openAdvice = () => {
+  setAdviceData({ title, lead, content, contact }); // スナップショット
+  setAdviceOpen(true);
+  setAdviceTrigger((n) => n + 1);                   // ★ここ
+  };
+  
+
   const titleCount = useMemo(() => countMarkdownChars(title), [title]);
   const showTitleWarn =
     titleCount >= TITLE_WARN_THRESHOLD && titleCount <= TITLE_MAX;
 
   const handleSave = () => {
     if (titleCount > TITLE_MAX) {
-      setError(
-        `タイトルは ${TITLE_MAX} 文字以内にしてください（現在 ${titleCount} 文字）。`
-      );
+      setError(`タイトルは ${TITLE_MAX} 文字以内にしてください（現在 ${titleCount} 文字）。`);
       return;
     }
     setError(null);
@@ -60,85 +75,109 @@ export default function MarkdownPreview() {
 
   return (
     <article className="w-4/5 mx-auto p-4">
-      {isEditing ? (
-        <div className="space-y-4">
-          <h2 className="text-xl font-bold">編集モード</h2>
+      {/* ← 横並びのラッパを追加 */}
+      <div className="flex gap-4 items-start">
+        {/* 左：本文エリア */}
+        <div className="flex-1 min-w-0">
+          {isEditing ? (
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold">編集モード</h2>
 
-          {/* タイトル */}
-          <div>
-            <h3 className="text-lg font-semibold mb-2">タイトル</h3>
-            <textarea
-              className="w-full border rounded p-2"
-              style={{ height: "80px" }}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-          <div>
-            現在 {titleCount} / {TITLE_MAX} 文字（Markdown除外）
-          </div>
-          {showTitleWarn && (
-            <div>文字数が少し多いです（{TITLE_WARN_THRESHOLD}文字以上）。</div>
+              {/* タイトル */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2">タイトル</h3>
+                <textarea
+                  className="w-full border rounded p-2"
+                  style={{ height: "80px" }}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                />
+              </div>
+              <div>現在 {titleCount} / {TITLE_MAX} 文字（Markdown除外）</div>
+              {showTitleWarn && <div>文字数が少し多いです（{TITLE_WARN_THRESHOLD}文字以上）。</div>}
+              {titleCount > TITLE_MAX && <div className="text-red-600">200文字以上は保存できません。</div>}
+              {error && <div className="text-red-600">{error}</div>}
+
+              {/* サブタイトル */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2">サブタイトル</h3>
+                <textarea
+                  className="w-full border rounded p-2"
+                  style={{ height: "80px" }}
+                  value={lead}
+                  onChange={(e) => setLead(e.target.value)}
+                />
+              </div>
+
+              {/* 本文 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2">本文</h3>
+                <textarea
+                  className="w-full border rounded p-2"
+                  style={{ height: "200px" }}
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                />
+              </div>
+
+              {/* 連絡先 */}
+              <div>
+                <h3 className="text-lg font-semibold mb-2">お問い合わせ</h3>
+                <textarea
+                  className="w-full border rounded p-2"
+                  style={{ height: "100px" }}
+                  value={contact}
+                  onChange={(e) => setContact(e.target.value)}
+                />
+              </div>
+
+              <div className="flex gap-2">
+                <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-black rounded">
+                  保存
+                </button>
+                {/* ★ ここは必ず openAdvice を呼ぶ */}
+                <button onClick={openAdvice} className="px-4 py-2 bg-amber-400 text-black rounded">
+                  アドバイス
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <ReactMarkdown>{title}</ReactMarkdown>
+              <ReactMarkdown>{lead}</ReactMarkdown>
+              <ReactMarkdown>{content}</ReactMarkdown>
+              <ReactMarkdown>{contact}</ReactMarkdown>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="px-4 py-2 bg-gray-600 text-black rounded"
+                >
+                  編集
+                </button>
+                {/* プレビューからもアドバイス可能にするならこれを残す */}
+                <button onClick={openAdvice} className="px-4 py-2 bg-amber-400 text-black rounded">
+                  アドバイス
+                </button>
+              </div>
+            </div>
           )}
-          {titleCount > TITLE_MAX && (
-            <div className="text-red-600">200文字以上は保存できません。</div>
-          )}
-          {error && <div className="text-red-600">{error}</div>}
-
-          {/* サブタイトル */}
-          <div>
-            <h3 className="text-lg font-semibold mb-2">サブタイトル</h3>
-            <textarea
-              className="w-full border rounded p-2"
-              style={{ height: "80px" }}
-              value={lead}
-              onChange={(e) => setLead(e.target.value)}
-            />
-          </div>
-
-          {/* 本文 */}
-          <div>
-            <h3 className="text-lg font-semibold mb-2">本文</h3>
-            <textarea
-              className="w-full border rounded p-2"
-              style={{ height: "200px" }}
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-            />
-          </div>
-
-          {/* 連絡先 */}
-          <div>
-            <h3 className="text-lg font-semibold mb-2">お問い合わせ</h3>
-            <textarea
-              className="w-full border rounded p-2"
-              style={{ height: "100px" }}
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-            />
-          </div>
-
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 bg-blue-600 text-black rounded"
-          >
-            保存
-          </button>
         </div>
-      ) : (
-        <div className="space-y-4">
-          <ReactMarkdown>{title}</ReactMarkdown>
-          <ReactMarkdown>{lead}</ReactMarkdown>
-          <ReactMarkdown>{content}</ReactMarkdown>
-          <ReactMarkdown>{contact}</ReactMarkdown>
-          <button
-            onClick={() => setIsEditing(true)}
-            className="px-4 py-2 bg-gray-600 text-black rounded"
-          >
-            編集
-          </button>
-        </div>
-      )}
+
+        {/* 右：AIアドバイス（side表示） */}
+        {adviceData && (
+          <AdvicePanel
+            open={adviceOpen}
+            onClose={() => setAdviceOpen(false)}
+            title={adviceData.title}
+            lead={adviceData.lead}
+            content={adviceData.content}
+            contact={adviceData.contact}
+            analyzeOptions={{ hooksThreshold: 3, timeoutMs: 20000 }}
+            placement="side"
+            trigger={adviceTrigger}
+          />
+        )}
+      </div>
     </article>
   );
 }

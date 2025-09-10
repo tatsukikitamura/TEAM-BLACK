@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from "react";
 
 export interface SelectOption {
   value: string;
@@ -18,25 +18,28 @@ const Select: React.FC<SelectProps> = ({
   value,
   onChange,
   placeholder = "選択してください",
-  className = ""
+  className = "",
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef<HTMLDivElement>(null);
 
   // 選択されたオプションを取得
-  const selectedOption = options.find(option => option.value === value);
+  const selectedOption = options.find((option) => option.value === value);
 
   // 外部クリックでドロップダウンを閉じる
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (selectRef.current && !selectRef.current.contains(event.target as Node)) {
+      if (
+        selectRef.current &&
+        !selectRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
@@ -50,19 +53,26 @@ const Select: React.FC<SelectProps> = ({
       {/* セレクトボタン */}
       <button
         type="button"
-        className="w-full px-4 py-2 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 flex justify-between items-center"
+        className="w-full px-4 py-2 text-left bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#294C79] focus:border-[#294C79] flex justify-between items-center"
         onClick={() => setIsOpen(!isOpen)}
       >
         <span className={selectedOption ? "text-gray-900" : "text-gray-500"}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <svg
-          className={`w-5 h-5 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`w-5 h-5 transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
         >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
@@ -74,7 +84,9 @@ const Select: React.FC<SelectProps> = ({
               key={option.value}
               type="button"
               className={`w-full px-4 py-2 text-left hover:bg-gray-100 focus:outline-none focus:bg-gray-100 ${
-                option.value === value ? 'bg-blue-50 text-blue-600' : 'text-gray-900'
+                option.value === value
+                  ? "bg-[#294C79]/10 text-[#294C79]"
+                  : "text-gray-900"
               }`}
               onClick={() => handleOptionClick(option.value)}
             >

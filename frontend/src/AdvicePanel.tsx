@@ -1,8 +1,7 @@
-import type { AnalysisResult } from "./types/api";
+import type { AnalysisResult, HookScore } from "./types/api";
 
 type Props = {
   open: boolean;
-  onClose: () => void;
   result: AnalysisResult | null;
   error: string | null;
   /** 'modal' | 'side' の2モード。既定は 'modal' */
@@ -45,7 +44,6 @@ export function toSections(
 }
 
 export default function AdvicePanel({
-  onClose,
   result,
   error,
   placement = "modal",
@@ -54,34 +52,43 @@ export default function AdvicePanel({
   const missingTitle: string[] = result?.ai?.fiveW2H?.title?.missing ?? [];
   const missingLead: string[] = result?.ai?.fiveW2H?.lead?.missing ?? [];
   const missingBody: string[] = result?.ai?.fiveW2H?.body?.missing ?? [];
-  const hooksDetected = result?.ai?.hooks?.scores ?? [];
-  const titleSuggestion = result?.ai?.fiveW2H?.title?.suggestion ?? "";
-  const leadSuggestion = result?.ai?.fiveW2H?.lead?.suggestion ?? "";
-  const bodySuggestion = result?.ai?.fiveW2H?.body?.suggestion ?? "";
+  const hooksDetected: HookScore[] = result?.ai?.hooks?.scores ?? [];
+  const titleSuggestion: string = result?.ai?.fiveW2H?.title?.suggestion ?? "";
+  const leadSuggestion: string = result?.ai?.fiveW2H?.lead?.suggestion ?? "";
+  const bodySuggestion: string = result?.ai?.fiveW2H?.body?.suggestion ?? "";
 
   const inner = (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold">AIアドバイス</h2>
-        <button className="px-3 py-1 rounded bg-gray-200" onClick={onClose}>
-          閉じる
-        </button>
+    <div className="space-y-6">
+      <div className="flex items-center pb-4 border-b border-[#F2F2F2]">
+        <h2 className="text-2xl font-bold text-[#294C79]">AIアドバイス</h2>
       </div>
 
-      {result == null && <div>解析中です…</div>}
-      {error && <div className="text-red-600">{error}</div>}
+      {result == null && (
+        <div className="text-[#294C79] text-center py-8 bg-[#F2F2F2] rounded-lg">
+          解析中です…
+        </div>
+      )}
+      {error && (
+        <div className="text-red-700 bg-red-50 border border-red-200 rounded-lg p-4">
+          {error}
+        </div>
+      )}
 
       {result && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           {/* フック改善提案 */}
           {hookSuggestions.length > 0 && (
-            <section className="border rounded p-3 bg-blue-50">
-              <h3 className="font-semibold mb-2 text-blue-700">
-                フック改善提案
+            <section className="border-2 border-[#294C79]/20 rounded-lg p-6 bg-white shadow-sm">
+              <h3 className="font-semibold mb-4 text-[#294C79] text-lg border-b border-[#F2F2F2] pb-3">
+                フック - 改善案
               </h3>
-              <ul className="list-disc list-inside space-y-1">
+              <ul className="space-y-4">
                 {hookSuggestions.map((s, i) => (
-                  <li key={i} className="text-sm">
+                  <li
+                    key={i}
+                    className="text-sm text-gray-800 leading-relaxed flex items-start bg-[#F2F2F2] p-3 rounded-lg"
+                  >
+                    <span className="inline-block w-2 h-2 bg-[#294C79] rounded-full mt-2 mr-3 flex-shrink-0"></span>
                     {s}
                   </li>
                 ))}
@@ -91,16 +98,20 @@ export default function AdvicePanel({
 
           {/* フックスコア表示 */}
           {hooksDetected.length > 0 && (
-            <section className="border rounded p-3">
-              <h3 className="font-semibold mb-2">フック分析結果</h3>
-              <div className="grid grid-cols-2 gap-2">
+            <section className="border-2 border-[#294C79]/20 rounded-lg p-6 bg-white shadow-sm">
+              <h3 className="font-semibold mb-4 text-[#294C79] text-lg border-b border-[#F2F2F2] pb-3">
+                フック - 分析
+              </h3>
+              <div className="grid grid-cols-2 gap-4">
                 {hooksDetected.map((hook, i) => (
                   <div
                     key={i}
-                    className="flex justify-between p-2 bg-gray-50 rounded"
+                    className="flex justify-between items-center p-4 bg-[#F2F2F2] rounded-lg border border-[#294C79]/10"
                   >
-                    <span className="text-sm">{hook.name}</span>
-                    <span className="text-sm font-medium">
+                    <span className="text-sm text-[#294C79] font-medium">
+                      {hook.name}
+                    </span>
+                    <span className="text-sm font-bold text-white bg-[#294C79] px-3 py-1 rounded-full">
                       {(hook.score * 100).toFixed(0)}%
                     </span>
                   </div>
@@ -111,46 +122,46 @@ export default function AdvicePanel({
 
           {/* 5W2H分析 - タイトル */}
           {missingTitle.length > 0 && (
-            <section className="border rounded p-3 bg-red-50">
-              <h3 className="font-semibold mb-2 text-red-700">
-                タイトル - 不足要素
+            <section className="border-2 border-[#294C79]/20 rounded-lg p-6 bg-white shadow-sm">
+              <h3 className="font-semibold mb-4 text-[#294C79] text-lg border-b border-[#F2F2F2] pb-3">
+                タイトル - 改善案
               </h3>
-              <div className="flex flex-wrap gap-1 mb-2">
+              <div className="flex flex-wrap gap-3 mb-4">
                 {missingTitle.map((element, i) => (
                   <span
                     key={i}
-                    className="px-2 py-1 bg-red-200 text-red-800 text-xs rounded"
+                    className="px-4 py-2 bg-[#294C79] text-white text-sm rounded-full font-medium"
                   >
                     {element}
                   </span>
                 ))}
               </div>
               {titleSuggestion && (
-                <div className="text-sm text-gray-700 bg-white p-2 rounded">
+                <div className="text-sm text-gray-800 bg-[#F2F2F2] p-4 rounded-lg border border-[#294C79]/10 leading-relaxed">
                   {titleSuggestion}
                 </div>
               )}
             </section>
           )}
 
-          {/* 5W2H分析 - サブタイトル */}
+          {/* 5W2H分析 - リード文 */}
           {missingLead.length > 0 && (
-            <section className="border rounded p-3 bg-yellow-50">
-              <h3 className="font-semibold mb-2 text-yellow-700">
-                サブタイトル - 不足要素
+            <section className="border-2 border-[#294C79]/20 rounded-lg p-6 bg-white shadow-sm">
+              <h3 className="font-semibold mb-4 text-[#294C79] text-lg border-b border-[#F2F2F2] pb-3">
+                リード文 - 改善案
               </h3>
-              <div className="flex flex-wrap gap-1 mb-2">
+              <div className="flex flex-wrap gap-3 mb-4">
                 {missingLead.map((element, i) => (
                   <span
                     key={i}
-                    className="px-2 py-1 bg-yellow-200 text-yellow-800 text-xs rounded"
+                    className="px-4 py-2 bg-[#294C79] text-white text-sm rounded-full font-medium"
                   >
                     {element}
                   </span>
                 ))}
               </div>
               {leadSuggestion && (
-                <div className="text-sm text-gray-700 bg-white p-2 rounded">
+                <div className="text-sm text-gray-800 bg-[#F2F2F2] p-4 rounded-lg border border-[#294C79]/10 leading-relaxed">
                   {leadSuggestion}
                 </div>
               )}
@@ -159,22 +170,22 @@ export default function AdvicePanel({
 
           {/* 5W2H分析 - 本文 */}
           {missingBody.length > 0 && (
-            <section className="border rounded p-3 bg-purple-50">
-              <h3 className="font-semibold mb-2 text-purple-700">
-                本文 - 不足要素
+            <section className="border-2 border-[#294C79]/20 rounded-lg p-6 bg-white shadow-sm">
+              <h3 className="font-semibold mb-4 text-[#294C79] text-lg border-b border-[#F2F2F2] pb-3">
+                本文 - 改善案
               </h3>
-              <div className="flex flex-wrap gap-1 mb-2">
+              <div className="flex flex-wrap gap-3 mb-4">
                 {missingBody.map((element, i) => (
                   <span
                     key={i}
-                    className="px-2 py-1 bg-purple-200 text-purple-800 text-xs rounded"
+                    className="px-4 py-2 bg-[#294C79] text-white text-sm rounded-full font-medium"
                   >
                     {element}
                   </span>
                 ))}
               </div>
               {bodySuggestion && (
-                <div className="text-sm text-gray-700 bg-white p-2 rounded">
+                <div className="text-sm text-gray-800 bg-[#F2F2F2] p-4 rounded-lg border border-[#294C79]/10 leading-relaxed">
                   {bodySuggestion}
                 </div>
               )}
@@ -185,11 +196,11 @@ export default function AdvicePanel({
           {missingTitle.length === 0 &&
             missingLead.length === 0 &&
             missingBody.length === 0 && (
-              <section className="border rounded p-3 bg-green-50">
-                <h3 className="font-semibold mb-2 text-green-700">
+              <section className="border-2 border-[#294C79]/20 rounded-lg p-6 bg-white shadow-sm">
+                <h3 className="font-semibold mb-4 text-[#294C79] text-lg border-b border-[#F2F2F2] pb-3">
                   ✓ 分析結果
                 </h3>
-                <p className="text-sm text-green-600">
+                <p className="text-sm text-gray-800 bg-[#F2F2F2] p-4 rounded-lg">
                   5W2H の主要要素が適切に含まれています。
                 </p>
               </section>
@@ -211,8 +222,8 @@ export default function AdvicePanel({
 
   return (
     <aside
-      className="w-[380px] shrink-0 max-h-[calc(100vh-4rem)] sticky top-4
-                 bg-white text-black border rounded-xl p-4 overflow-auto shadow-sm"
+      className="w-[400px] shrink-0 max-h-[calc(100vh-4rem)] sticky top-4
+                 bg-white text-black border-2 border-[#294C79]/20 rounded-xl p-6 overflow-auto shadow-lg"
       aria-label="AIアドバイス"
     >
       {inner}

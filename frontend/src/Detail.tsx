@@ -5,7 +5,7 @@ import Select from "./components/Select";
 import type { AnalysisResult, PressReleaseData } from "./types/api";
 import { toSections } from "./AdvicePanel";
 import ShodoAdviceLauncher from "./shodo/ShodoAdviceLauncher";
-import { ensureNotificationPermission, showDesktopNotification } from "./notify";
+import { ensureNotificationPermission, showDesktopNotification } from "./notice/notify";
 
 
 // モックデータ（略）
@@ -97,7 +97,7 @@ export default function MarkdownPreview() {
     setAdviceData({ title, lead, content, contact }); // スナップショット
     setAdviceOpen(true);
 
-     // ★ 初回だけ許可を取りにいく（ユーザー操作直後）
+  // ★ 通知を初回だけ許可を取りにいく（ユーザー操作直後）
   const perm = await ensureNotificationPermission();
   if (perm === "denied") {
     console.info("[notify] ユーザーが通知を拒否しました。以後は通知を出さずに続行します。");
@@ -108,7 +108,7 @@ export default function MarkdownPreview() {
       lead,
       content: toSections(content),
       contact,
-      searchHook: selectedHooks, // ★ 追加
+      searchHook: selectedHooks, 
       options: {
         target_hooks: 3,
         timeoutMs: 20000,
@@ -126,7 +126,7 @@ export default function MarkdownPreview() {
       console.log(json);
       setResult(json);
 
-          // ★ ここで通知（権限が granted なら true が返る）
+    // ★ ここで通知（権限が granted なら true が返る）
     const notified = await showDesktopNotification({
       title: "AIアドバイスの準備ができました",
       body: "クリックでアドバイスへスクロールします。",

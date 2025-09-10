@@ -324,13 +324,14 @@ export default function MarkdownPreview() {
             open={adviceOpen}
             result={result}
             error={adviceError}
+            contact={contact}
             placement="side"
           />
         )}
       </div>
       <ShodoAdviceLauncher
         variant="inline"
-        label="Shodoアドバイス"
+        label="文書校正"
         values={{ title, lead, bodyMd: content, contact }} // これで空にならない
       />
     </article>

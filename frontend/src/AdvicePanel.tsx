@@ -4,6 +4,7 @@ type Props = {
   open: boolean;
   result: AnalysisResult | null;
   error: string | null;
+  contact?: string;
   /** 'modal' | 'side' の2モード。既定は 'modal' */
   placement?: "modal" | "side";
   /** ボタン押下ごとにインクリメントして再取得トリガーにする */
@@ -45,6 +46,7 @@ export function toSections(
 
 export default function AdvicePanel({
   result,
+  contact,
   error,
   placement = "modal",
 }: Props) {
@@ -191,6 +193,76 @@ export default function AdvicePanel({
               )}
             </section>
           )}
+
+          {/* お問い合わせ情報の改善提案 */}
+          {(() => {
+            // contactが空または基本的なテンプレートのみの場合をチェック
+            const isEmpty =
+              !contact || contact.trim() === "" || contact.trim() === "---";
+
+            if (isEmpty) {
+              return (
+                <section className="border-2 border-[#294C79]/20 rounded-lg p-6 bg-white shadow-sm">
+                  <h3 className="font-semibold mb-4 text-[#294C79] text-lg border-b border-[#F2F2F2] pb-3">
+                    お問い合わせ - 改善案
+                  </h3>
+                  <div className="flex flex-wrap gap-3 mb-4">
+                    <span className="px-4 py-2 bg-[#294C79] text-white text-sm rounded-full font-medium">
+                      部署・担当者名
+                    </span>
+                    <span className="px-4 py-2 bg-[#294C79] text-white text-sm rounded-full font-medium">
+                      メールアドレス
+                    </span>
+                    <span className="px-4 py-2 bg-[#294C79] text-white text-sm rounded-full font-medium">
+                      電話番号
+                    </span>
+                  </div>
+                  <div className="text-sm text-gray-800 bg-[#F2F2F2] p-4 rounded-lg border border-[#294C79]/10 leading-relaxed">
+                    お問い合わせ情報を追加することをお勧めします。部署名または担当者名、メールアドレス、電話番号を記載することで、読者が気軽に連絡を取ることができ、プレスリリースの効果を高めることができます。
+                  </div>
+                </section>
+              );
+            }
+
+            // contactに内容がある場合は、不足要素をチェック
+            const missingElements = [];
+            if (!contact.includes("@")) missingElements.push("メールアドレス");
+            if (
+              !contact.includes("電話") &&
+              !contact.includes("TEL") &&
+              !contact.includes("tel")
+            )
+              missingElements.push("電話番号");
+            if (!contact.includes("部署") && !contact.includes("担当"))
+              missingElements.push("部署・担当者名");
+
+            if (missingElements.length > 0) {
+              return (
+                <section className="border-2 border-[#294C79]/20 rounded-lg p-6 bg-white shadow-sm">
+                  <h3 className="font-semibold mb-4 text-[#294C79] text-lg border-b border-[#F2F2F2] pb-3">
+                    お問い合わせ - 改善案
+                  </h3>
+                  <div className="flex flex-wrap gap-3 mb-4">
+                    {missingElements.map((element, i) => (
+                      <span
+                        key={i}
+                        className="px-4 py-2 bg-[#294C79] text-white text-sm rounded-full font-medium"
+                      >
+                        {element}
+                      </span>
+                    ))}
+                  </div>
+                  <div className="text-sm text-gray-800 bg-[#F2F2F2] p-4 rounded-lg border border-[#294C79]/10 leading-relaxed">
+                    お問い合わせ情報をより充実させることをお勧めします。
+                    {missingElements.join("、")}
+                    を追加することで、読者がより簡単に連絡を取ることができるようになります。
+                  </div>
+                </section>
+              );
+            }
+
+            return null;
+          })()}
 
           {/* 全て完璧な場合の表示 */}
           {missingTitle.length === 0 &&

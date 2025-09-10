@@ -5,17 +5,18 @@ class OpenAiJudge
    # モデルを環境変数から取得して指定。gpt-4o-miniを使用するのは、費用の安さとレスポンスの速さのため。
     MODEL = ENV.fetch("OPENAI_MODEL", "gpt-4o-mini")
   
-    # ai = OpenAiJudge.call(title: title, lead: lead, body: bodytxt, contact: contact, target_hooks: hooks_threshold, timeout_ms: timeout_ms, search_hook: search_hook) のようにcallメソッドを呼び出せるようにする記述。analyzes_controller.rb で使用。
-    def self.call(title:, lead:, body:, contact:, target_hooks:, timeout_ms: 20_000, search_hook: "")
-      new(title, lead, body, contact, target_hooks, timeout_ms, search_hook).call
+    # ai = OpenAiJudge.call(title: title, lead: lead, body: bodytxt, contact: contact, target_hooks: hooks_threshold, timeout_ms: timeout_ms, search_hook: search_hook, success_examples: success_examples) のようにcallメソッドを呼び出せるようにする記述。analyzes_controller.rb で使用。
+    def self.call(title:, lead:, body:, contact:, target_hooks:, timeout_ms: 20_000, search_hook: "", success_examples: [])
+      new(title, lead, body, contact, target_hooks, timeout_ms, search_hook, success_examples).call
     end
     
     # オブジェクトの初期化を行い、後でcallメソッドで使用するためのデータを準備します。
-    def initialize(title, lead, body, contact, target_hooks, timeout_ms, search_hook)
+    def initialize(title, lead, body, contact, target_hooks, timeout_ms, search_hook, success_examples)
       @title, @lead, @body, @contact = title, lead, body, contact
       @target_hooks = target_hooks
       @timeout_ms   = timeout_ms
       @search_hook  = search_hook
+      @success_examples = success_examples
     end
   
     # OpenAI APIを呼び出して分析を行うメソッド。
@@ -86,6 +87,11 @@ class OpenAiJudge
       - SEARCH_HOOKが指定されている場合：指定されたフックを強化するための具体的な改善案（リライト案など）を生成
       - SEARCH_HOOKが指定されていない場合：スコアが高いフックや改善すべきフックについて汎用的なアドバイスを生成
 
+      **成功事例参照**:
+      - SUCCESS_EXAMPLESが提供されている場合、それらの成功事例を参考にして改善提案を行う
+      - 成功事例の良い点を分析し、現在のプレスリリースに適用できる要素を提案する
+      - 成功事例の特徴的な表現や構成を参考に、より効果的な改善案を生成する
+
       定義（5W2H+1W）:
       - Who（誰が）: 主語となる企業・団体名
       - What（何を）: サービス/事業/プロジェクト/イベント/製品/組織
@@ -143,6 +149,7 @@ class OpenAiJudge
     # OpenAIに送信するユーザーメッセージの内容を生成するメソッドです。分析対象のプレスリリースデータをAIが理解しやすい形式に構造化して送信します。
     def user_payload
       search_hook_info = @search_hook.empty? ? "" : "\n\n[SEARCH_HOOK]\n#{@search_hook}"
+      success_examples_info = @success_examples.empty? ? "" : "\n\n[SUCCESS_EXAMPLES]\n#{@success_examples.join("\n")}"
       
       <<~TXT
         <INPUTS>
@@ -156,7 +163,7 @@ class OpenAiJudge
         #{@body}
   
         [CONTACT]
-        #{@contact}#{search_hook_info}
+        #{@contact}#{search_hook_info}#{success_examples_info}
         </INPUTS>
       TXT
     end

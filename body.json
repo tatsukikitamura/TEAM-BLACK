@@ -1,0 +1,16 @@
+{
+    "body":  [
+                 {
+                     "content":  "本文テキスト",
+                     "heading":  "発表の概要"
+                 }
+             ],
+    "title":  "PRTIEM、新たな時代を切り拓く革新的ソリューションを発表",
+    "lead":  "概要テキスト",
+    "contact":  "連絡先テキスト",
+    "options":  {
+                    "maxWaitMs":  6000,
+                    "pollIntervalMs":  500,
+                    "type":  "text"
+                }
+}

@@ -45,7 +45,7 @@ Content-Type: application/json
 
 **パラメータ**
 
-| フィールド               | 型      | 必須 | 説明                                          |
+| フィールド                | 型      | 必須 | 説明                                          |
 | ------------------------ | ------- | ---- | --------------------------------------------- |
 | `title`                  | string  | 必須 | プレスリリースのタイトル                      |
 | `lead`                   | string  | 必須 | リード文（概要）                              |
@@ -137,6 +137,15 @@ AI分析結果と改善提案を返します。
 }
 ```
 
+```json
+{
+  "error": {
+    "code": "AiError",
+    "message": "AI分析でエラーが発生しました"
+  }
+}
+```
+
 ### 2. プレスリリース校正
 
 #### POST `/api/shodo`
@@ -154,15 +163,10 @@ Content-Type: application/json
 
 ```json
 {
-  "title": "プレスリリースのタイトル",
-  "lead": "リード文",
-  "body": [
-    {
-      "heading": "セクション見出し",
-      "content": "セクション内容"
-    }
-  ],
-  "contact": "連絡先情報",
+  "title": "チーム開発×データ分析に挑む3Daysハッカソン受付開始",
+  "lead": "プレスリリース配信サービス「PR TIMES」等を運営する株式会社PR TIMES（東京都港区、代表取締役：山口拓己、東証プライSプライム：3922）は、2026・27年卒業予定のエンジニア志望学生を対象に、「PR TIMES HACKATHON 2025 Summer」を開催します。",
+  "content": "## 同世代エンジニアとつながり、チーム開発の経験を積める3日間\n\nPR TIMESハッカソンは、2016年より開催している内定直結型のハッカソンイベントです。2025年9月8日〜10日の3日間でWebサービスの開発を行い、特に優秀な方には年収500万円以上の中途採用基準での内定をお出しします。",
+  "contact": "【お問い合わせ】株式会社PR TIMES 広報部 / https://prtimes.co.jp/",
   "options": {
     "type": "text",
     "maxWaitMs": 6000,
@@ -177,9 +181,7 @@ Content-Type: application/json
 | ------------------------ | ------- | ---- | ----------------------------------------- |
 | `title`                  | string  | 必須 | プレスリリースのタイトル                  |
 | `lead`                   | string  | 必須 | リード文（概要）                          |
-| `body`                   | array   | 必須 | 本文セクションの配列                      |
-| `body[].heading`         | string  | 必須 | セクションの見出し                        |
-| `body[].content`         | string  | 必須 | セクションの内容                          |
+| `content`                | string  | 必須 | 本文内容（マークダウン形式）              |
 | `contact`                | string  | 必須 | 連絡先情報                                |
 | `options.type`           | string  | 任意 | 校正タイプ（デフォルト: "text"）          |
 | `options.maxWaitMs`      | integer | 任意 | 最大待機時間（ミリ秒、デフォルト: 6000）  |
@@ -196,35 +198,23 @@ Content-Type: application/json
     "messages": [
       {
         "type": "ら抜き言葉",
-        "before": "食べれる",
-        "after": "食べられる",
+        "section": "lead",
         "offset": 45,
         "length": 3,
-        "message": "ら抜き言葉の修正",
-        "explanation": "ら抜き言葉は正しくは「食べられる」です",
-        "section": "lead"
+        "before": "食べれる",
+        "after": "食べられる",
+        "explanation": "ら抜き言葉です。正しくは「食べられる」です。"
+      },
+      {
+        "type": "敬語",
+        "section": "body",
+        "offset": 102,
+        "length": 4,
+        "before": "言った",
+        "after": "申した",
+        "explanation": "より丁寧な敬語表現があります。"
       }
-    ],
-    "summary": {
-      "counts": {
-        "total": 4,
-        "ranuki": 2,
-        "keigo": 1
-      },
-      "bySection": {
-        "title": 0,
-        "lead": 2,
-        "body": 2,
-        "contact": 0
-      },
-      "ranukiSamples": [
-        {
-          "section": "lead",
-          "before": "食べれる",
-          "after": "食べられる"
-        }
-      ]
-    }
+    ]
   }
 }
 ```
@@ -245,6 +235,15 @@ Content-Type: application/json
 
 - **400 Bad Request**: 必須パラメータが不足
 - **502 Bad Gateway**: Shodo API エラー
+
+```json
+{
+  "error": {
+    "code": "BadRequest",
+    "message": "パラメータが不足しています"
+  }
+}
+```
 
 ```json
 {
@@ -274,11 +273,25 @@ GET /api/shodo/abc123
   "shodo": {
     "status": "done",
     "messages": [
-      /* 校正メッセージの配列 */
-    ],
-    "summary": {
-      /* 校正結果の要約 */
-    }
+      {
+        "type": "ら抜き言葉",
+        "section": "lead",
+        "offset": 45,
+        "length": 3,
+        "before": "食べれる",
+        "after": "食べられる",
+        "explanation": "ら抜き言葉です。正しくは「食べられる」です。"
+      },
+      {
+        "type": "敬語",
+        "section": "body",
+        "offset": 102,
+        "length": 4,
+        "before": "言った",
+        "after": "申した",
+        "explanation": "より丁寧な敬語表現があります。"
+      }
+    ]
   }
 }
 ```
@@ -335,30 +348,29 @@ GET /api/shodo/abc123
 | フィールド    | 型      | 説明                                               |
 | ------------- | ------- | -------------------------------------------------- |
 | `type`        | string  | 校正の種類（例: "ら抜き言葉", "敬語"）             |
-| `before`      | string  | 修正前のテキスト                                   |
-| `after`       | string  | 修正後のテキスト                                   |
+| `section`     | string  | セクション名（"title", "lead", "body", "contact"） |
 | `offset`      | integer | テキスト内での位置（文字数）                       |
 | `length`      | integer | 対象テキストの長さ                                 |
-| `message`     | string  | 校正メッセージ                                     |
+| `before`      | string  | 修正前のテキスト                                   |
+| `after`       | string  | 修正後のテキスト                                   |
 | `explanation` | string  | 詳細な説明                                         |
-| `section`     | string  | セクション名（"title", "lead", "body", "contact"） |
 
-### 校正結果の要約
+### 校正結果の構造
 
-- **counts**: 校正件数の統計
-  - `total`: 総校正件数
-  - `ranuki`: ら抜き言葉の件数
-  - `keigo`: 敬語の件数
-- **bySection**: セクション別の校正件数
-- **ranukiSamples**: ら抜き言葉の修正例
+校正結果は以下の構造で返されます：
+
+- **status**: 校正処理の状態（"done" または "processing"）
+- **messages**: 校正メッセージの配列
+  - 各メッセージには `type`、`section`、`offset`、`length`、`before`、`after`、`explanation` が含まれます
 
 ## エラーコード
 
-| コード       | HTTP ステータス | 説明                       |
-| ------------ | --------------- | -------------------------- |
-| `BadRequest` | 400             | リクエストパラメータが不正 |
-| `AiError`    | 502             | AI 分析でエラーが発生      |
-| `ShodoError` | 502             | Shodo API でエラーが発生   |
+| コード         | HTTP ステータス | 説明                       |
+| -------------- | --------------- | -------------------------- |
+| `BadRequest`   | 400             | リクエストパラメータが不正 |
+| `DatabaseError`| 500             | データベース処理でエラーが発生 |
+| `AiError`      | 502             | AI 分析でエラーが発生      |
+| `ShodoError`   | 502             | Shodo API でエラーが発生   |
 
 ## 使用例
 
@@ -370,12 +382,7 @@ curl -X POST http://localhost:3000/api/analyze \
   -d '{
     "title": "チーム開発×データ分析に挑む3Daysハッカソン受付開始",
     "lead": "プレスリリース配信サービス「PR TIMES」等を運営する株式会社PR TIMES（東京都港区、代表取締役：山口拓己、東証プライム：3922）は、2026・27年卒業予定のエンジニア志望学生を対象に、「PR TIMES HACKATHON 2025 Summer」を開催します。",
-    "body": [
-      {
-        "heading": "同世代エンジニアとつながり、チーム開発の経験を積める3日間",
-        "content": "PR TIMESハッカソンは、2016年より開催している内定直結型のハッカソンイベントです。2025年9月8日〜10日の3日間でWebサービスの開発を行い、特に優秀な方には年収500万円以上の中途採用基準での内定をお出しします。"
-      }
-    ],
+    "content": "## 同世代エンジニアとつながり、チーム開発の経験を積める3日間\n\nPR TIMESハッカソンは、2016年より開催している内定直結型のハッカソンイベントです。2025年9月8日〜10日の3日間でWebサービスの開発を行い、特に優秀な方には年収500万円以上の中途採用基準での内定をお出しします。",
     "contact": "【お問い合わせ】株式会社PR TIMES 広報部 / https://prtimes.co.jp/",
     "options": {
       "hooksThreshold": 3
@@ -391,12 +398,7 @@ curl -X POST http://localhost:3000/api/shodo \
   -d '{
     "title": "新商品発表会のご案内",
     "lead": "来月開催される新商品発表会についてご案内いたします。",
-    "body": [
-      {
-        "heading": "開催概要",
-        "content": "詳細な内容がここに記載されます。食べれるはら抜き言葉のテストです。"
-      }
-    ],
+    "content": "## 開催概要\n\n詳細な内容がここに記載されます。食べれるはら抜き言葉のテストです。",
     "contact": "お問い合わせはこちらまで",
     "options": {
       "type": "text",

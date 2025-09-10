@@ -9,7 +9,6 @@ import {
   ensureNotificationPermission,
   showDesktopNotification,
 } from "./notify";
-
 // モックデータ（略）
 const initialTitle = `# PRTIEM、新たな時代を切り拓く革新的ソリューションを発表`;
 const initialLead = `2025年◯月◯日、**PRTIEM** は最新のプレリリースを公開し、業界に新たな可能性を提示しました。本記事では、その主要ポイントと今後の展望をまとめます。`;
@@ -112,7 +111,7 @@ export default function MarkdownPreview() {
       lead,
       content: toSections(content),
       contact,
-      searchHook: selectedHooks, // ★ 追加
+      searchHook: selectedHooks, 
       options: {
         target_hooks: 3,
         timeoutMs: 20000,
@@ -132,18 +131,19 @@ export default function MarkdownPreview() {
       const json = await res.json();
       setResult(json);
 
-      // ★ ここで通知（権限が granted なら true が返る）
-      const notified = await showDesktopNotification({
-        title: "AIアドバイスの準備ができました",
-        body: "クリックでアドバイスへスクロールします。",
-        icon: "/icon-192.png", // 任意（public 配下のアイコン）
-        tag: "advice-ready", // 同一タグは再通知時にマージ
-        silent: false,
-        data: {
-          url: location.href, // 既存タブが無い場合に開くURL
-          scrollTarget: '[aria-label="AIアドバイス"]', // Bridge 側のデフォルトに合わせる
-        },
-      });
+
+    // ★ ここで通知（権限が granted なら true が返る）
+    const notified = await showDesktopNotification({
+      title: "AIアドバイスの準備ができました",
+      body: "クリックでアドバイスへスクロールします。",
+      icon: "/icon-192.png",                 // 任意（public 配下のアイコン）
+      tag: "advice-ready",                   // 同一タグは再通知時にマージ
+      silent: false,
+      data: {
+        url: location.href,                  // 既存タブが無い場合に開くURL
+        scrollTarget: '[aria-label="AIアドバイス"]', // Bridge 側のデフォルトに合わせる
+      },
+    });
 
       if (!notified) {
         // 通知が出せない環境 or denied の場合は黙ってスキップ（必要ならトースト表示など）

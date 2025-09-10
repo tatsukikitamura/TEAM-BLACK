@@ -8,7 +8,7 @@ import ShodoAdviceLauncher from "./shodo/ShodoAdviceLauncher";
 import {
   ensureNotificationPermission,
   showDesktopNotification,
-} from "./notify";
+} from "./notice/notify";
 // モックデータ（略）
 const initialTitle = `# PRTIEM、新たな時代を切り拓く革新的ソリューションを発表`;
 const initialLead = `2025年◯月◯日、**PRTIEM** は最新のプレリリースを公開し、業界に新たな可能性を提示しました。本記事では、その主要ポイントと今後の展望をまとめます。`;

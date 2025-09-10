@@ -3,10 +3,27 @@ import ShodoAdvicePanel from "./ShodoAdvicePanel";
 import styles from "./ShodoAdvicePanel.module.css";
 import { collectDraft } from "./domCollector";
 
-type SelectorConfig = { title?: string; lead?: string; body?: string; contact?: string };
-type Values = { title?: string; lead?: string; bodyMd?: string; contact?: string };
+type SelectorConfig = {
+  title?: string;
+  lead?: string;
+  body?: string;
+  contact?: string;
+};
+type Values = {
+  title?: string;
+  lead?: string;
+  bodyMd?: string;
+  contact?: string;
+};
 
-export default function ShodoAdviceLauncher(props: { selectors?: SelectorConfig; values?: Values }) {
+type Props = {
+  selectors?: SelectorConfig;
+  values?: Values;
+  variant?: "fab" | "inline";
+  label?: string;
+};
+
+export default function ShodoAdviceLauncher(props: Props) {
   const [open, setOpen] = useState(false);
   const [seed, setSeed] = useState<Values>();
 
@@ -30,18 +47,20 @@ export default function ShodoAdviceLauncher(props: { selectors?: SelectorConfig;
 
   return (
     <>
-      <button className={styles.fab} onClick={openWithCurrent}>
-        Shodoヘルプ
+      <button
+        className={props.variant === "inline" ? styles.inlineBtn : styles.fab}
+        onClick={openWithCurrent}
+      >
+        {props.label || "Shodoヘルプ"}
       </button>
       <ShodoAdvicePanel
         open={open}
         onClose={() => setOpen(false)}
         title={seed?.title ?? ""}
         lead={seed?.lead ?? ""}
-        content={seed?.bodyMd ?? ""}  // ← Panel 側では content として送られる
+        content={seed?.bodyMd ?? ""} // ← Panel 側では content として送られる
         contact={seed?.contact ?? ""}
       />
     </>
   );
 }
-

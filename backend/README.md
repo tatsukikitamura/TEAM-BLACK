@@ -1,16 +1,19 @@
 ### Backend（Rails API）
 
-このドキュメントは backend（Rails API）に関する情報のみをまとめたものです。
+このドキュメントは backend（Railsを用いたAPI）に関する情報をまとめたものです。
 
-### 主な技術
+### 主な使用技術
 - Ruby 3.3.0
 - Rails 8.0.2（API）
-- Shodo
+- Shodo（日本語校正AI）
 - RSpec（テスト用）
 - Faraday / faraday-retry（外部 API 連携）
 - rack-cors（CORS）
 - Solid Queue / Solid Cache / Solid Cable（Rails 8 同梱）
 - Dockerfile（本番想定ビルド）
+
+###技術の選定理由
+- チームの得意分野を考慮し、RoRを用いたAPIの環境構築を行うことにしました。
 
 ### プロジェクトの概要
 
@@ -29,7 +32,7 @@
 - 必要な環境変数（`.env` などに設定可能。`dotenv-rails` 利用可）
   - `SHODO_API_URL`（必須）: Shodo API のベース URL
   - `SHODO_TOKEN`（必須）: Shodo API の Bearer トークン
-  - `OPENAI_API_KEY`（必須）：
+  - `OPENAI_API_KEY`（必須）：OPENAIのAPIを使用するにあたり、KEYが必要となります。
 
 ### ディレクトリ構成（抜粋）
 ```
